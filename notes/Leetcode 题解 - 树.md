@@ -48,10 +48,11 @@
 
 [Leetcode](https://leetcode.com/problems/maximum-depth-of-binary-tree/description/) / [力扣](https://leetcode-cn.com/problems/maximum-depth-of-binary-tree/description/)
 
-```java
-public int maxDepth(TreeNode root) {
-    if (root == null) return 0;
-    return Math.max(maxDepth(root.left), maxDepth(root.right)) + 1;
+```c++
+public class Solution {
+    public int maxDepth(TreeNode root) {
+        return root == null ? 0 : (1 + Math.max(maxDepth(root.left), maxDepth(root.right)));
+    }
 }
 ```
 
