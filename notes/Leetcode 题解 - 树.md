@@ -47,6 +47,7 @@
 104\. Maximum Depth of Binary Tree (Easy)
 
 [Leetcode](https://leetcode.com/problems/maximum-depth-of-binary-tree/description/) / [力扣](https://leetcode-cn.com/problems/maximum-depth-of-binary-tree/description/)
+求二叉树的最大深度问题用到深度优先搜索 Depth First Search，递归的完美应用，跟求二叉树的最小深度问题原理相同，参见代码如下：
 
 ```c++
 public class Solution {
@@ -71,22 +72,28 @@ public class Solution {
 ```
 
 平衡树左右子树高度差都小于等于 1
-
-```java
-private boolean result = true;
-
-public boolean isBalanced(TreeNode root) {
-    maxDepth(root);
-    return result;
-}
-
-public int maxDepth(TreeNode root) {
-    if (root == null) return 0;
-    int l = maxDepth(root.left);
-    int r = maxDepth(root.right);
-    if (Math.abs(l - r) > 1) result = false;
-    return 1 + Math.max(l, r);
-}
+上面那个方法正确但不是很高效，因为每一个点都会被上面的点计算深度时访问一次，我们可以进行优化。方法是如果我们发现子树不平衡，则不计算具体的深度，而是直接返回-1。那么优化后的方法为：对于每一个节点，我们通过checkDepth方法递归获得左右子树的深度，如果子树是平衡的，则返回真实的深度，若不平衡，直接返回-1，此方法时间复杂度O(N)，空间复杂度O(H)，参见代码如下：
+```c++
+class Solution {
+public:
+    bool isBalanced(TreeNode* root) {
+        if (isHeightDiffByOne(root) == -1)
+            return false;
+        else
+            return true;
+    }
+    
+    int isHeightDiffByOne(TreeNode* root) {
+        if (!root)
+            return 0;
+        int left = isHeightDiffByOne(root->left);
+        int right = isHeightDiffByOne(root->right);
+        if (left == -1 || right == -1 || abs(left - right) > 1)
+            return -1;
+        return max(left, right) + 1;
+    }
+    
+};
 ```
 
 ## 3. 两节点的最长路径
@@ -107,21 +114,30 @@ Input:
 Return 3, which is the length of the path [4,2,1,3] or [5,2,1,3].
 ```
 
-```java
-private int max = 0;
+```c++
+class Solution {
+public:
+    int diameterOfBinaryTree(TreeNode* root) {
+        int res = 0;
+        longestLength(root, res);
+        return res;
+    }
+    
+    int longestLength(TreeNode* root, int& max_val) {
+        if (!root)
+            return 0;
+        if (length.count(root))
+            return length[root];
+        int left = longestLength(root->left, max_val);
+        int right = longestLength(root->right, max_val);
+        max_val = max(max_val, left + right); // not left+right+1 is because of the question definition
+        length[root] = max(left, right) + 1;
+        return length[root];
+    }
 
-public int diameterOfBinaryTree(TreeNode root) {
-    depth(root);
-    return max;
-}
-
-private int depth(TreeNode root) {
-    if (root == null) return 0;
-    int leftDepth = depth(root.left);
-    int rightDepth = depth(root.right);
-    max = Math.max(max, leftDepth + rightDepth);
-    return Math.max(leftDepth, rightDepth) + 1;
-}
+private:
+    unordered_map<TreeNode*, int> length; 
+};
 ```
 
 ## 4. 翻转树
@@ -130,14 +146,18 @@ private int depth(TreeNode root) {
 
 [Leetcode](https://leetcode.com/problems/invert-binary-tree/description/) / [力扣](https://leetcode-cn.com/problems/invert-binary-tree/description/)
 
-```java
-public TreeNode invertTree(TreeNode root) {
-    if (root == null) return null;
-    TreeNode left = root.left;  // 后面的操作会改变 left 指针，因此先保存下来
-    root.left = invertTree(root.right);
-    root.right = invertTree(left);
-    return root;
-}
+```c++
+class Solution {
+public:
+    TreeNode* invertTree(TreeNode* root) {
+        if (!root)
+            return NULL;
+        TreeNode* tmp = root->left;
+        root->left = invertTree(root->right);
+        root->right = invertTree(tmp);
+        return root;
+    }
+};
 ```
 
 ## 5. 归并两棵树
