@@ -145,7 +145,7 @@ private:
 226\. Invert Binary Tree (Easy)
 
 [Leetcode](https://leetcode.com/problems/invert-binary-tree/description/) / [力扣](https://leetcode-cn.com/problems/invert-binary-tree/description/)
-
+先来看递归的方法，写法非常简洁，五行代码搞定，交换当前左右节点，并直接调用递归即可，代码如下：
 ```c++
 class Solution {
 public:
@@ -183,16 +183,20 @@ Output:
      5   4   7
 ```
 
-```java
-public TreeNode mergeTrees(TreeNode t1, TreeNode t2) {
-    if (t1 == null && t2 == null) return null;
-    if (t1 == null) return t2;
-    if (t2 == null) return t1;
-    TreeNode root = new TreeNode(t1.val + t2.val);
-    root.left = mergeTrees(t1.left, t2.left);
-    root.right = mergeTrees(t1.right, t2.right);
-    return root;
-}
+```c++
+class Solution {
+public:
+    TreeNode* mergeTrees(TreeNode* t1, TreeNode* t2) {
+        if (!t1) // return t2 which covers 2 cases: 1. !t1 && t2, 2. !t1 && !t2 
+            return t2;
+        if (!t2) // returns t1, t1 && !t2
+            return t1;
+        TreeNode* t = new TreeNode(t1->val + t2->val); // t1 && t2
+        t->left = mergeTrees(t1->left, t2->left);
+        t->right = mergeTrees(t1->right, t2->right);
+        return t;
+    }
+};
 ```
 
 ## 6. 判断路径和是否等于一个数
@@ -217,12 +221,17 @@ return true, as there exist a root-to-leaf path 5->4->11->2 which sum is 22.
 
 路径和定义为从 root 到 leaf 的所有节点的和。
 
-```java
-public boolean hasPathSum(TreeNode root, int sum) {
-    if (root == null) return false;
-    if (root.left == null && root.right == null && root.val == sum) return true;
-    return hasPathSum(root.left, sum - root.val) || hasPathSum(root.right, sum - root.val);
-}
+```c++
+class Solution {
+public:
+    bool hasPathSum(TreeNode* root, int sum) {
+        if (!root)
+            return false;
+        if (!root->left && !root->right && root->val == sum)
+            return true;
+        return hasPathSum(root->left, sum - root->val) || hasPathSum(root->right, sum - root->val);
+    }
+};
 ```
 
 ## 7. 统计路径和等于一个数的路径数量
@@ -251,20 +260,31 @@ Return 3. The paths that sum to 8 are:
 
 路径不一定以 root 开头，也不一定以 leaf 结尾，但是必须连续。
 
-```java
-public int pathSum(TreeNode root, int sum) {
-    if (root == null) return 0;
-    int ret = pathSumStartWithRoot(root, sum) + pathSum(root.left, sum) + pathSum(root.right, sum);
-    return ret;
-}
+https://github.com/grandyang/leetcode/issues/437 解法2， 这题一开始hashmap怎么使用理解挺费劲的，
+明确几个事情就好理解了：1，curSum一定是从root加到当前节点（包含当前节点）的值。2，root到当前节点的路径一定唯一。
+3， 一定只能算当前路径（root到当前节点）上有几个解（通过hashmap查到），别的路径上的解需要递归遍历的过程中用完后立即从hashmap里抹掉，
+防止重复count。4，curSum - sum = 某差值，map[某差值]的值（个数）就代表了当前路径上有几个和是sum的解。
+5， map[0] = 1是程序能对所有case正常运行需要一开始设置的，在map[0] ++ --的过程中一直maintain是1，代表curSum==sum时，surSum-sum=0，map[0] =1代表有一个解。
 
-private int pathSumStartWithRoot(TreeNode root, int sum) {
-    if (root == null) return 0;
-    int ret = 0;
-    if (root.val == sum) ret++;
-    ret += pathSumStartWithRoot(root.left, sum - root.val) + pathSumStartWithRoot(root.right, sum - root.val);
-    return ret;
-}
+```c++
+class Solution {
+public:
+    int pathSum(TreeNode* root, int sum) {
+        unordered_map<int, int> paths = {{0, 1}}; // accumulated_sum -> num of paths (from root to cur_node, it must be the same path with different lengths) that can lead to this accumulated_sum
+        return pathSumResult(root, 0, sum, paths);
+    }
+    
+    int pathSumResult(TreeNode* root, int curSum, int& sum, unordered_map<int, int>& paths) {
+        if (!root)
+            return 0;
+        curSum += root->val;
+        int res = paths[curSum - sum];
+        ++paths[curSum];
+        res += pathSumResult(root->left, curSum, sum, paths) + pathSumResult(root->right, curSum, sum, paths);
+        --paths[curSum];
+        return res;
+    }
+};
 ```
 
 ## 8. 子树
@@ -305,19 +325,31 @@ Given tree t:
 
 Return false.
 ```
-
-```java
-public boolean isSubtree(TreeNode s, TreeNode t) {
-    if (s == null) return false;
-    return isSubtreeWithRoot(s, t) || isSubtree(s.left, t) || isSubtree(s.right, t);
-}
-
-private boolean isSubtreeWithRoot(TreeNode s, TreeNode t) {
-    if (t == null && s == null) return true;
-    if (t == null || s == null) return false;
-    if (t.val != s.val) return false;
-    return isSubtreeWithRoot(s.left, t.left) && isSubtreeWithRoot(s.right, t.right);
-}
+下面这道题的解法用到了之前那道Serialize and Deserialize Binary Tree的解法，思路是对s和t两棵树分别进行序列化，各生成一个字符串，如果t的字符串是s的子串的话，就说明t是s的子树，但是需要注意的是，为了避免出现[12], [2], 这种情况，虽然2也是12的子串，但是[2]却不是[12]的子树，所以我们再序列化的时候要特殊处理一下，就是在每个结点值前面都加上一个字符，比如','，来分隔开，那么[12]序列化后就是",12,#"，而[2]序列化之后就是",2,#"，这样就可以完美的解决之前的问题了，参见代码如下：
+```c++
+class Solution {
+public:
+    bool isSubtree(TreeNode* s, TreeNode* t) {
+        if (!s || !t) 
+            return false;
+        ostringstream oss_s, oss_t;
+        serialize(s, oss_s);
+        serialize(t, oss_t);
+        if (oss_s.str().find(oss_t.str()) != string::npos)
+            return true;
+        return false;
+    }
+    
+    void serialize (TreeNode* root, ostringstream& oss) {
+        if (!root) {
+            oss << ",#";
+            return;
+        }
+        oss << "," << root->val;
+        serialize(root->left, oss);
+        serialize(root->right, oss);
+    }
+};
 ```
 
 ## 9. 树的对称
@@ -333,19 +365,24 @@ private boolean isSubtreeWithRoot(TreeNode s, TreeNode t) {
  / \ / \
 3  4 4  3
 ```
-
-```java
-public boolean isSymmetric(TreeNode root) {
-    if (root == null) return true;
-    return isSymmetric(root.left, root.right);
-}
-
-private boolean isSymmetric(TreeNode t1, TreeNode t2) {
-    if (t1 == null && t2 == null) return true;
-    if (t1 == null || t2 == null) return false;
-    if (t1.val != t2.val) return false;
-    return isSymmetric(t1.left, t2.right) && isSymmetric(t1.right, t2.left);
-}
+https://github.com/grandyang/leetcode/issues/101
+```c++
+class Solution {
+public:
+    bool isSymmetric(TreeNode* root) {
+        if (!root)
+            return true;
+        return isSymmetric(root->left, root->right);
+    }
+    
+    bool isSymmetric(TreeNode* left, TreeNode* right) {
+        if (!left && !right)
+            return true;
+        if ((!left && right) || (left && !right) || (left->val != right->val))
+            return false;
+        return isSymmetric(left->left, right->right) && isSymmetric(left->right, right->left);
+    }
+};
 ```
 
 ## 10. 最小路径
@@ -354,16 +391,21 @@ private boolean isSymmetric(TreeNode t1, TreeNode t2) {
 
 [Leetcode](https://leetcode.com/problems/minimum-depth-of-binary-tree/description/) / [力扣](https://leetcode-cn.com/problems/minimum-depth-of-binary-tree/description/)
 
-树的根节点到叶子节点的最小路径长度
+二叉树的经典问题之最小深度问题就是就最短路径的节点个数，还是用深度优先搜索 DFS 来完成，万能的递归啊。首先判空，若当前结点不存在，直接返回0。然后看若左子结点不存在，那么对右子结点调用递归函数，并加1返回。反之，若右子结点不存在，那么对左子结点调用递归函数，并加1返回。若左右子结点都存在，则分别对左右子结点调用递归函数，将二者中的较小值加1返回即可，参见代码如下：
 
-```java
-public int minDepth(TreeNode root) {
-    if (root == null) return 0;
-    int left = minDepth(root.left);
-    int right = minDepth(root.right);
-    if (left == 0 || right == 0) return left + right + 1;
-    return Math.min(left, right) + 1;
-}
+```c++
+class Solution {
+public:
+    int minDepth(TreeNode* root) {
+        if (!root) 
+            return 0;
+        if (!root->left)
+            return 1 + minDepth(root->right);
+        if (!root->right)
+            return 1 + minDepth(root->left);
+        return 1 + min(minDepth(root->left), minDepth(root->right));
+    }
+};
 ```
 
 ## 11. 统计左叶子节点的和
@@ -382,17 +424,18 @@ public int minDepth(TreeNode root) {
 There are two left leaves in the binary tree, with values 9 and 15 respectively. Return 24.
 ```
 
-```java
-public int sumOfLeftLeaves(TreeNode root) {
-    if (root == null) return 0;
-    if (isLeaf(root.left)) return root.left.val + sumOfLeftLeaves(root.right);
-    return sumOfLeftLeaves(root.left) + sumOfLeftLeaves(root.right);
-}
-
-private boolean isLeaf(TreeNode node){
-    if (node == null) return false;
-    return node.left == null && node.right == null;
-}
+```c++
+class Solution {
+public:
+    int sumOfLeftLeaves(TreeNode* root) {
+        if (!root)
+            return 0;
+        // add the value if this is a left leaf
+        if (root->left && !root->left->left && !root->left->right)
+            return root->left->val + sumOfLeftLeaves(root->right);
+        return sumOfLeftLeaves(root->left) + sumOfLeftLeaves(root->right);
+    }
+};
 ```
 
 ## 12. 相同节点值的最大路径长度
@@ -411,23 +454,26 @@ private boolean isLeaf(TreeNode node){
 Output : 2
 ```
 
-```java
-private int path = 0;
-
-public int longestUnivaluePath(TreeNode root) {
-    dfs(root);
-    return path;
-}
-
-private int dfs(TreeNode root){
-    if (root == null) return 0;
-    int left = dfs(root.left);
-    int right = dfs(root.right);
-    int leftPath = root.left != null && root.left.val == root.val ? left + 1 : 0;
-    int rightPath = root.right != null && root.right.val == root.val ? right + 1 : 0;
-    path = Math.max(path, leftPath + rightPath);
-    return Math.max(leftPath, rightPath);
-}
+```c++
+class Solution {
+public:
+    int longestUnivaluePath(TreeNode* root) {
+        int ret = 0;
+        longerPath(root, ret);
+        return ret;
+    }
+    
+    int longerPath(TreeNode* root, int& local_max) {
+        if (!root)
+            return 0;
+        int left = longerPath(root->left, local_max);
+        int right = longerPath(root->right, local_max);
+        left = (root->left && root->left->val == root->val) ? ++left : 0;
+        right = (root->right && root->right->val == root->val) ? ++right : 0;
+        local_max = max(local_max, left + right);
+        return max(left, right);
+    }
+};
 ```
 
 ## 13. 间隔遍历
@@ -445,15 +491,25 @@ private int dfs(TreeNode root){
 Maximum amount of money the thief can rob = 3 + 3 + 1 = 7.
 ```
 
-```java
-public int rob(TreeNode root) {
-    if (root == null) return 0;
-    int val1 = root.val;
-    if (root.left != null) val1 += rob(root.left.left) + rob(root.left.right);
-    if (root.right != null) val1 += rob(root.right.left) + rob(root.right.right);
-    int val2 = rob(root.left) + rob(root.right);
-    return Math.max(val1, val2);
-}
+```c++
+class Solution {
+public:
+    int rob(TreeNode* root) {
+        if (root == nullptr) return 0;
+        if (val_cache_.count(root)) return val_cache_[root];
+        int val = root->val;
+        int l = rob(root->left);
+        int r = rob(root->right);
+        int ll = root->left ? rob(root->left->left) : 0;
+        int lr = root->left ? rob(root->left->right) : 0;
+        int rl = root->right ? rob(root->right->left) : 0;
+        int rr = root->right ? rob(root->right->right) : 0;
+        return val_cache_[root] = max(val + ll + lr + rl + rr, l + r);
+        
+    }
+private:
+    unordered_map<TreeNode*, int> val_cache_;
+};
 ```
 
 ## 14. 找出二叉树中第二小的节点
@@ -475,18 +531,28 @@ Output: 5
 
 一个节点要么具有 0 个或 2 个子节点，如果有子节点，那么根节点是最小的节点。
 
-```java
-public int findSecondMinimumValue(TreeNode root) {
-    if (root == null) return -1;
-    if (root.left == null && root.right == null) return -1;
-    int leftVal = root.left.val;
-    int rightVal = root.right.val;
-    if (leftVal == root.val) leftVal = findSecondMinimumValue(root.left);
-    if (rightVal == root.val) rightVal = findSecondMinimumValue(root.right);
-    if (leftVal != -1 && rightVal != -1) return Math.min(leftVal, rightVal);
-    if (leftVal != -1) return leftVal;
-    return rightVal;
-}
+```c++
+class Solution {
+public:
+    int findSecondMinimumValue(TreeNode* root) {
+        if (!root) return -1;
+        int the_smallest_val = root->val;
+        return DFS(root, the_smallest_val);
+    }
+
+private:
+    int DFS(TreeNode* root, int the_smallest_val) {
+        if (!root) return -1;
+        // find the second small value
+        if (root->val > the_smallest_val) return root->val;
+        // jump into the children nodes when the current val equals the_smallest_val
+        int l = DFS(root->left, the_smallest_val);
+        int r = DFS(root->right, the_smallest_val);
+        if (l == -1) return r;
+        if (r == -1) return l;
+        return min(l, r);
+    }
+};
 ```
 
 # 层次遍历
@@ -499,25 +565,28 @@ public int findSecondMinimumValue(TreeNode root) {
 
 [Leetcode](https://leetcode.com/problems/average-of-levels-in-binary-tree/description/) / [力扣](https://leetcode-cn.com/problems/average-of-levels-in-binary-tree/description/)
 
-```java
-public List<Double> averageOfLevels(TreeNode root) {
-    List<Double> ret = new ArrayList<>();
-    if (root == null) return ret;
-    Queue<TreeNode> queue = new LinkedList<>();
-    queue.add(root);
-    while (!queue.isEmpty()) {
-        int cnt = queue.size();
-        double sum = 0;
-        for (int i = 0; i < cnt; i++) {
-            TreeNode node = queue.poll();
-            sum += node.val;
-            if (node.left != null) queue.add(node.left);
-            if (node.right != null) queue.add(node.right);
+```c++
+class Solution {
+public:
+    vector<double> averageOfLevels(TreeNode* root) {
+        if (!root) return {};
+        vector<double> ans;
+        queue<TreeNode*> queue {{root}};
+        while (!queue.empty()) {
+            int num_of_nodes = queue.size();
+            double sum = 0;
+            for (size_t i = 0; i < num_of_nodes; ++i) {
+                TreeNode* node = queue.front();
+                sum += node->val;
+                if (node->left) queue.push(node->left);
+                if (node->right) queue.push(node->right);          
+                queue.pop();
+            }
+            ans.push_back(sum/num_of_nodes);
         }
-        ret.add(sum / cnt);
+        return ans;
     }
-    return ret;
-}
+};
 ```
 
 ## 2. 得到左下角的节点
@@ -540,18 +609,27 @@ Input:
 Output:
 7
 ```
-
-```java
-public int findBottomLeftValue(TreeNode root) {
-    Queue<TreeNode> queue = new LinkedList<>();
-    queue.add(root);
-    while (!queue.isEmpty()) {
-        root = queue.poll();
-        if (root.right != null) queue.add(root.right);
-        if (root.left != null) queue.add(root.left);
+只要是DFS，那么每一行最左边的结点肯定最先遍历到。
+```c++
+class Solution {
+public:
+    int findBottomLeftValue(TreeNode* root) {
+        int ans;
+        int max_level = -1; //assume tree's level is 0 based
+        Inorder(root, 0, max_level, ans);
+        return ans;
     }
-    return root.val;
-}
+private:
+    void Inorder(TreeNode* root, int lvl, int& max_lvl, int& ans) {
+        if (!root) return;
+        Inorder(root->left, lvl + 1, max_lvl, ans);
+        if (lvl > max_lvl) {
+            ans = root->val;
+            max_lvl = lvl;
+        }
+        Inorder(root->right, lvl + 1, max_lvl, ans);
+    }
+};
 ```
 
 # 前中后序遍历
