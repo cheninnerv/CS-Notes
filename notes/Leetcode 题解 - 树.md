@@ -1324,58 +1324,57 @@ Input: insert("app", 2), Output: Null
 Input: sum("ap"), Output: 5
 ```
 
-```java
+```c++
 class MapSum {
-
-    private class Node {
-        Node[] child = new Node[26];
-        int value;
-    }
-
-    private Node root = new Node();
-
-    public MapSum() {
-
-    }
-
-    public void insert(String key, int val) {
-        insert(key, root, val);
-    }
-
-    private void insert(String key, Node node, int val) {
-        if (node == null) return;
-        if (key.length() == 0) {
-            node.value = val;
-            return;
+public:
+    /** Initialize your data structure here. */
+    MapSum() : root_(new Trie()){}
+    
+    void insert(string key, int val) {
+        Trie* p = root_.get();
+        int increase = val;
+        if (val_.count(key))
+            increase = val - val_[key];
+        for (const char c : key) {
+            if (!p->children[c - 'a'])
+                p->children[c - 'a'] = new Trie();
+            p->children[c - 'a']->sum += increase;
+            p= p->children[c - 'a'];
         }
-        int index = indexForChar(key.charAt(0));
-        if (node.child[index] == null) {
-            node.child[index] = new Node();
+        val_[key] = val;
+    }
+    
+    int sum(string prefix) {
+        Trie* p = root_.get();
+        for (const char c : prefix) {
+            if (!p->children[c - 'a'])
+                return 0;
+            p = p->children[c - 'a'];
         }
-        insert(key.substring(1), node.child[index], val);
+        return p->sum;
     }
 
-    public int sum(String prefix) {
-        return sum(prefix, root);
-    }
-
-    private int sum(String prefix, Node node) {
-        if (node == null) return 0;
-        if (prefix.length() != 0) {
-            int index = indexForChar(prefix.charAt(0));
-            return sum(prefix.substring(1), node.child[index]);
+private:
+    struct Trie {
+        Trie() : sum(0), children(128, nullptr){}
+        ~Trie() {
+            for (auto child : children)
+                if (child) delete child;
+            children.clear();
         }
-        int sum = node.value;
-        for (Node child : node.child) {
-            sum += sum(prefix, child);
-        }
-        return sum;
-    }
+        int sum;
+        vector<Trie*> children;
+    };
+    std::unique_ptr<Trie> root_;
+    unordered_map<string, int> val_;
+};
 
-    private int indexForChar(char c) {
-        return c - 'a';
-    }
-}
+/**
+ * Your MapSum object will be instantiated and called as such:
+ * MapSum* obj = new MapSum();
+ * obj->insert(key,val);
+ * int param_2 = obj->sum(prefix);
+ */
 ```
 
 
