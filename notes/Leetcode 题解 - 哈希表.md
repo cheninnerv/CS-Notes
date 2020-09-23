@@ -77,20 +77,22 @@ Explanation: The longest harmonious subsequence is [3,2,2,2,3].
 
 和谐序列中最大数和最小数之差正好为 1，应该注意的是序列的元素不一定是数组的连续元素。
 
-```java
-public int findLHS(int[] nums) {
-    Map<Integer, Integer> countForNum = new HashMap<>();
-    for (int num : nums) {
-        countForNum.put(num, countForNum.getOrDefault(num, 0) + 1);
-    }
-    int longest = 0;
-    for (int num : countForNum.keySet()) {
-        if (countForNum.containsKey(num + 1)) {
-            longest = Math.max(longest, countForNum.get(num + 1) + countForNum.get(num));
+``c++
+class Solution {
+public:
+    int findLHS(vector<int>& nums) {
+        unordered_map<int, int> number_of;
+        for (size_t i = 0; i < nums.size(); ++i) {
+            ++number_of[nums[i]];
         }
+        int ans = 0;
+        for (const auto key : number_of) {
+            if (number_of.count(key.first + 1))
+                ans = max(ans, number_of[key.first] + number_of[key.first + 1]);
+        }
+        return ans;
     }
-    return longest;
-}
+};
 ```
 
 # 4. 最长连续序列
@@ -105,39 +107,25 @@ The longest consecutive elements sequence is [1, 2, 3, 4]. Return its length: 4.
 ```
 
 要求以 O(N) 的时间复杂度求解。
-
-```java
-public int longestConsecutive(int[] nums) {
-    Map<Integer, Integer> countForNum = new HashMap<>();
-    for (int num : nums) {
-        countForNum.put(num, 1);
+https://zxi.mytechroad.com/blog/hashtable/leetcode-128-longest-consecutive-sequence/
+```c++
+class Solution {
+public:
+    int longestConsecutive(vector<int>& nums) {
+        unordered_map<int, int> len;
+        int ans = 0;
+        for (size_t i = 0; i < nums.size(); ++i) {
+            if (len.count(nums[i]))
+                continue;
+            int l = len.count(nums[i] - 1) ? len[nums[i] - 1] : 0;
+            int r = len.count(nums[i] + 1) ? len[nums[i] + 1] : 0;
+            int local_max = l + r + 1;
+            len[nums[i]] = len[nums[i] - l] = len[nums[i] + r] = local_max;
+            ans = max(ans, local_max);
+        }
+        return ans;
     }
-    for (int num : nums) {
-        forward(countForNum, num);
-    }
-    return maxCount(countForNum);
-}
-
-private int forward(Map<Integer, Integer> countForNum, int num) {
-    if (!countForNum.containsKey(num)) {
-        return 0;
-    }
-    int cnt = countForNum.get(num);
-    if (cnt > 1) {
-        return cnt;
-    }
-    cnt = forward(countForNum, num + 1) + 1;
-    countForNum.put(num, cnt);
-    return cnt;
-}
-
-private int maxCount(Map<Integer, Integer> countForNum) {
-    int max = 0;
-    for (int num : countForNum.keySet()) {
-        max = Math.max(max, countForNum.get(num));
-    }
-    return max;
-}
+};
 ```
 
 
