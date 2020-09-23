@@ -25,18 +25,21 @@
 
 用 HashMap 存储数组元素和索引的映射，在访问到 nums[i] 时，判断 HashMap 中是否存在 target - nums[i]，如果存在说明 target - nums[i] 所在的索引和 i 就是要找的两个数。该方法的时间复杂度为 O(N)，空间复杂度为 O(N)，使用空间来换取时间。
 
-```java
-public int[] twoSum(int[] nums, int target) {
-    HashMap<Integer, Integer> indexForNum = new HashMap<>();
-    for (int i = 0; i < nums.length; i++) {
-        if (indexForNum.containsKey(target - nums[i])) {
-            return new int[]{indexForNum.get(target - nums[i]), i};
-        } else {
-            indexForNum.put(nums[i], i);
+```c++
+class Solution {
+public:
+    vector<int> twoSum(vector<int>& nums, int target) {
+        if (nums.size() < 2) return {};
+        unordered_map<int, int> value;
+        for (int i = 0; i < nums.size(); ++i) {
+            int the_other_one = target - nums[i];
+            if (value.count(the_other_one))
+                return {value[the_other_one], i};
+            value[nums[i]] = i;
         }
+        return {};
     }
-    return null;
-}
+};
 ```
 
 # 2. 判断数组是否含有重复元素
@@ -45,14 +48,19 @@ public int[] twoSum(int[] nums, int target) {
 
 [Leetcode](https://leetcode.com/problems/contains-duplicate/description/) / [力扣](https://leetcode-cn.com/problems/contains-duplicate/description/)
 
-```java
-public boolean containsDuplicate(int[] nums) {
-    Set<Integer> set = new HashSet<>();
-    for (int num : nums) {
-        set.add(num);
+```c++
+class Solution {
+public:
+    bool containsDuplicate(vector<int>& nums) {
+        unordered_set<int> unique_set;
+        for (size_t i = 0; i < nums.size(); ++i) {
+            if (unique_set.count(nums[i]))
+                return true;
+            unique_set.insert(nums[i]);
+        }
+        return false;
     }
-    return set.size() < nums.length;
-}
+};
 ```
 
 # 3. 最长和谐序列
