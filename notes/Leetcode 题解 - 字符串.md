@@ -1,7 +1,8 @@
 <!-- GFM-TOC -->
 * [1. 字符串循环移位包含](#1-字符串循环移位包含)
-* [2. 字符串循环移位](#2-字符串循环移位)
-* [3. 字符串中单词的翻转](#3-字符串中单词的翻转)
+* [2. 字符串翻转](#2-字符串翻转)
+* [3. 最长回文子字符串](#3-最长回文子字符串)
+* [3.5 有效回文](#3.5-有效回文)
 * [4. 两个字符串包含的字符是否完全相同](#4-两个字符串包含的字符是否完全相同)
 * [5. 计算一组字符集合可以组成的回文字符串的最大长度](#5-计算一组字符集合可以组成的回文字符串的最大长度)
 * [6. 字符串同构](#6-字符串同构)
@@ -13,10 +14,8 @@
 
 # 1. 字符串循环移位包含
 
-[编程之美 3.1](#)
-
+[LeetCode 28. Implement strStr()](#)
 ```html
-LeetCode 28. Implement strStr()
 Implement strStr().
 
 Return the index of the first occurrence of needle in haystack, or -1 if needle is not part of haystack.
@@ -61,29 +60,134 @@ public:
 };
 ```
 
-# 2. 字符串循环移位
+# 2. 字符串翻转
 
-[编程之美 2.17](#)
-
-```html
-s = "abcd123" k = 3
-Return "123abcd"
-```
-
-将字符串向右循环移动 k 位。
-
-将 abcd123 中的 abcd 和 123 单独翻转，得到 dcba321，然后对整个字符串进行翻转，得到 123abcd。
-
-# 3. 字符串中单词的翻转
-
-[程序员代码面试指南](#)
+[344. Reverse String](#)
 
 ```html
-s = "I am a student"
-Return "student a am I"
+Write a function that reverses a string. The input string is given as an array of characters char[].
+
+Do not allocate extra space for another array, you must do this by modifying the input array in-place with O(1) extra memory.
+
+You may assume all the characters consist of printable ascii characters.
+
+
+Example 1:
+
+Input: ["h","e","l","l","o"]
+Output: ["o","l","l","e","h"]
+Example 2:
+
+Input: ["H","a","n","n","a","h"]
+Output: ["h","a","n","n","a","H"]
 ```
 
-将每个单词翻转，然后将整个字符串翻转。
+```c++
+class Solution {
+public:
+    void reverseString(vector<char>& s) {
+        int l = 0, r = s.size() - 1;
+        while (l < r) {
+            char temp = s[l];
+            s[l++] = s[r];
+            s[r--] = temp;
+        }
+    }
+};
+```
+
+# 3. 最长回文子字符串
+
+[5. Longest Palindromic Substring](#)
+
+```html
+Given a string s, find the longest palindromic substring in s. You may assume that the maximum length of s is 1000.
+
+Example 1:
+
+Input: "babad"
+Output: "bab"
+Note: "aba" is also a valid answer.
+Example 2:
+
+Input: "cbbd"
+Output: "bb"
+```
+
+```c++
+class Solution {
+public:
+    string longestPalindrome(string s) {
+        int n = s.length();
+        auto GetLen = [&] (int l, int r) {
+            while (l >= 0 && r < n && s[l] == s[r]) {
+                --l;
+                ++r;
+            }
+            return r - l - 1; // -1 is because l and r are right outside of the palindrome after exiting while loop.
+        };
+        int start = 0;
+        int max_len = 0;
+        for (int i = 0; i < n; ++i) {
+            int len = max(GetLen(i, i), GetLen(i, i + 1));
+            if (len > max_len) {
+                max_len = len;
+                start = i - (len - 1) / 2;
+            }
+        }
+        return s.substr(start, max_len);
+    }
+};
+```
+
+
+
+# 3.5 有效回文
+
+[125. Valid Palindrome](#)
+
+```html
+Given a string, determine if it is a palindrome, considering only alphanumeric characters and ignoring cases.
+
+Note: For the purpose of this problem, we define empty string as valid palindrome.
+
+Example 1:
+
+Input: "A man, a plan, a canal: Panama"
+Output: true
+Example 2:
+
+Input: "race a car"
+Output: false
+ 
+
+Constraints:
+
+s consists only of printable ASCII characters.
+```
+
+```c++
+class Solution {
+public:
+    bool isPalindrome(string s) {
+        int l = 0, r = s.length() - 1;
+        while (l < r) {
+            if (!isalnum(s[l])) {
+                ++l;
+                continue;
+            }
+            if (!isalnum(s[r])) {
+                --r;
+                continue;
+            }
+            if (tolower(s[l++]) != tolower(s[r--]))
+                return false;
+        }
+        return true;
+    }
+};
+```
+
 
 # 4. 两个字符串包含的字符是否完全相同
 
@@ -100,22 +204,22 @@ s = "rat", t = "car", return false.
 
 由于本题的字符串只包含 26 个小写字符，因此可以使用长度为 26 的整型数组对字符串出现的字符进行统计，不再使用 HashMap。
 
-```java
-public boolean isAnagram(String s, String t) {
-    int[] cnts = new int[26];
-    for (char c : s.toCharArray()) {
-        cnts[c - 'a']++;
-    }
-    for (char c : t.toCharArray()) {
-        cnts[c - 'a']--;
-    }
-    for (int cnt : cnts) {
-        if (cnt != 0) {
+```c++
+class Solution {
+public:
+    bool isAnagram(string s, string t) {
+        if (s.length() != t.length())
             return false;
+        vector<int> num(26, 0); // 128 covers ASCII, 1,111,998 covers possible Unicode characters.
+        for (const char& c : s)
+            ++num[c - 'a']; // can't use num[c], because num[c] returns [0~128], num[c - 'a'] returns [0~26]
+        for (const char& c : t) {
+            if (--num[c - 'a'] < 0)
+                return false;
         }
+        return true;
     }
-    return true;
-}
+};
 ```
 
 # 5. 计算一组字符集合可以组成的回文字符串的最大长度
@@ -134,21 +238,24 @@ Explanation : One longest palindrome that can be built is "dccaccd", whose lengt
 
 因为回文字符串最中间的那个字符可以单独出现，所以如果有单独的字符就把它放到最中间。
 
-```java
-public int longestPalindrome(String s) {
-    int[] cnts = new int[256];
-    for (char c : s.toCharArray()) {
-        cnts[c]++;
+```c++
+class Solution {
+public:
+    int longestPalindrome(string s) {
+        vector<int> num(128, 0); // if input is alphabets then vector of 128 is faster than hashmap
+        int ans = 0;
+        bool odd = false;
+        for (const char& c : s)
+            ++num[c];
+        for (const int& n : num) {
+            ans += (n >> 1) << 1; // this equals to ans += (n / 2) * 2
+            if (n % 2 == 1)
+                odd = true;
+        }
+        ans = odd ? ans + 1 : ans;
+        return ans;
     }
-    int palindrome = 0;
-    for (int cnt : cnts) {
-        palindrome += (cnt / 2) * 2;
-    }
-    if (palindrome < s.length()) {
-        palindrome++;   // 这个条件下 s 中一定有单个未使用的字符存在，可以把这个字符放到回文的最中间
-    }
-    return palindrome;
-}
+};
 ```
 
 # 6. 字符串同构
