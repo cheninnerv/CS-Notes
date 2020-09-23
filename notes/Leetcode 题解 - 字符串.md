@@ -16,13 +16,50 @@
 [编程之美 3.1](#)
 
 ```html
-s1 = AABCD, s2 = CDAA
-Return : true
+LeetCode 28. Implement strStr()
+Implement strStr().
+
+Return the index of the first occurrence of needle in haystack, or -1 if needle is not part of haystack.
+
+Example 1:
+
+Input: haystack = "hello", needle = "ll"
+Output: 2
+Example 2:
+
+Input: haystack = "aaaaa", needle = "bba"
+Output: -1
+Clarification:
+
+What should we return when needle is an empty string? This is a great question to ask during an interview.
+
+For the purpose of this problem, we will return 0 when needle is an empty string. This is consistent to C’s strstr() and Java’s indexOf().
 ```
 
 给定两个字符串 s1 和 s2，要求判定 s2 是否能够被 s1 做循环移位得到的字符串包含。
 
 s1 进行循环移位的结果是 s1s1 的子字符串，因此只要判断 s2 是否是 s1s1 的子字符串即可。
+
+```c++
+class Solution {
+public:
+    int strStr(string haystack, string needle) {
+        int h = haystack.length(), n = needle.length();
+        for (int i = 0; i <= h - n; ++i) {
+            bool found = true;
+            for (int j = 0; j < n; ++j) {
+                if (haystack[i + j] != needle[j]) {
+                    found = false;
+                    break;
+                }
+            }
+            if (found)
+                return i;
+        }
+        return -1;
+    }
+};
+```
 
 # 2. 字符串循环移位
 
