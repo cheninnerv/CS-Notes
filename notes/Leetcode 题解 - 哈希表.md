@@ -77,7 +77,7 @@ Explanation: The longest harmonious subsequence is [3,2,2,2,3].
 
 和谐序列中最大数和最小数之差正好为 1，应该注意的是序列的元素不一定是数组的连续元素。
 
-``c++
+```c++
 class Solution {
 public:
     int findLHS(vector<int>& nums) {
