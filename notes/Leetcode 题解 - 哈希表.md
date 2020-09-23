@@ -99,6 +99,7 @@ public:
 
 128\. Longest Consecutive Sequence (Hard)
 
+
 [Leetcode](https://leetcode.com/problems/longest-consecutive-sequence/description/) / [力扣](https://leetcode-cn.com/problems/longest-consecutive-sequence/description/)
 
 ```html
@@ -106,8 +107,8 @@ Given [100, 4, 200, 1, 3, 2],
 The longest consecutive elements sequence is [1, 2, 3, 4]. Return its length: 4.
 ```
 
-要求以 O(N) 的时间复杂度求解。
-https://zxi.mytechroad.com/blog/hashtable/leetcode-128-longest-consecutive-sequence/
+要求以 O(N) 的时间复杂度求解。https://zxi.mytechroad.com/blog/hashtable/leetcode-128-longest-consecutive-sequence/
+
 ```c++
 class Solution {
 public:
