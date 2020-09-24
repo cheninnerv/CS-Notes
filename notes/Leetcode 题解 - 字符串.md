@@ -8,7 +8,7 @@
 * [6. 字符串同构](#6-字符串同构)
 * [7. 回文子字符串个数](#7-回文子字符串个数)
 * [8. 判断一个整数是否是回文数](#8-判断一个整数是否是回文数)
-* [9. 统计二进制字符串中连续 1 和连续 0 数量相同的子字符串个数](#9-统计二进制字符串中连续-1-和连续-0-数量相同的子字符串个数)
+* [9. 回文切割](#9-回文切割)
 <!-- GFM-TOC -->
 
 
@@ -353,35 +353,59 @@ public:
 };
 ```
 
-# 9. 统计二进制字符串中连续 1 和连续 0 数量相同的子字符串个数
+# 9. 回文切割
 
-696\. Count Binary Substrings (Easy)
+131\. Palindrome Partitioning (Medium)
 
-[Leetcode](https://leetcode.com/problems/count-binary-substrings/description/) / [力扣](https://leetcode-cn.com/problems/count-binary-substrings/description/)
+[Leetcode](https://leetcode.com/problems/palindrome-partitioning/description/) / [力扣](https://leetcode-cn.com/problems/palindrome-partitioning/description/)
 
 ```html
-Input: "00110011"
-Output: 6
-Explanation: There are 6 substrings that have equal number of consecutive 1's and 0's: "0011", "01", "1100", "10", "0011", and "01".
+Given a string s, partition s such that every substring of the partition is a palindrome.
+
+Return all possible palindrome partitioning of s.
+
+Example:
+
+Input: "aab"
+Output:
+[
+  ["aa","b"],
+  ["a","a","b"]
+]
 ```
 
-```java
-public int countBinarySubstrings(String s) {
-    int preLen = 0, curLen = 1, count = 0;
-    for (int i = 1; i < s.length(); i++) {
-        if (s.charAt(i) == s.charAt(i - 1)) {
-            curLen++;
-        } else {
-            preLen = curLen;
-            curLen = 1;
+```c++
+class Solution {
+public:
+    vector<vector<string>> partition(string s) {
+        vector<vector<string>> ans;
+        vector<string> row;
+        PartitionHelper(s, 0, row, ans);
+        return ans;
+    }
+private:
+    void PartitionHelper(string s, int start, vector<string>& row, vector<vector<string>>& ans) {
+        if(start == s.length()) {
+            ans.push_back(row);
+            return;
         }
-
-        if (preLen >= curLen) {
-            count++;
+        for (int i = start; i < s.length(); ++i) {
+            if (!IsPalindrome(s, start, i))
+                continue;
+            row.push_back(s.substr(start, i - start + 1));
+            PartitionHelper(s, i + 1, row, ans);
+            row.pop_back();
         }
     }
-    return count;
-}
+     
+    bool IsPalindrome(string s, int start, int end) {
+        while (start < end) {
+            if (s[start] != s[end]) return false;
+            ++start; --end;
+        }
+        return true;
+    }
+};
 ```
 
 
