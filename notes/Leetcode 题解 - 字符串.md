@@ -272,20 +272,20 @@ Given "paper", "title", return true.
 
 记录一个字符上次出现的位置，如果两个字符串中的字符上次出现的位置一样，那么就属于同构。
 
-```java
-public boolean isIsomorphic(String s, String t) {
-    int[] preIndexOfS = new int[256];
-    int[] preIndexOfT = new int[256];
-    for (int i = 0; i < s.length(); i++) {
-        char sc = s.charAt(i), tc = t.charAt(i);
-        if (preIndexOfS[sc] != preIndexOfT[tc]) {
-            return false;
+```c++
+class Solution {
+public:
+    bool isIsomorphic(string s, string t) {
+        vector<int> en_s(128, -1), en_t(128, -1);
+        for (int i = 0; i < s.length(); ++i) {
+            if (en_s[s[i]] != en_t[t[i]])
+                return false; 
+            en_s[s[i]] = i;
+            en_t[t[i]] = i; 
         }
-        preIndexOfS[sc] = i + 1;
-        preIndexOfT[tc] = i + 1;
+        return true;
     }
-    return true;
-}
+};
 ```
 
 # 7. 回文子字符串个数
@@ -300,26 +300,29 @@ Output: 6
 Explanation: Six palindromic strings: "a", "a", "a", "aa", "aa", "aaa".
 ```
 
-从字符串的某一位开始，尝试着去扩展子字符串。
+从字符串的某一位开始，尝试着去扩展子字符串。kc: 和上面👆那道Longest Palindromic Substring几乎一样。
 
-```java
-private int cnt = 0;
-
-public int countSubstrings(String s) {
-    for (int i = 0; i < s.length(); i++) {
-        extendSubstrings(s, i, i);     // 奇数长度
-        extendSubstrings(s, i, i + 1); // 偶数长度
+```c++
+class Solution {
+public:
+    int countSubstrings(string s) {
+        int n = s.length();
+        auto CountNum = [&] (int l, int r) {
+            int count = 0;
+            while (l >= 0 && r < n && s[l] == s[r]) {
+                ++count;
+                --l;
+                ++r;
+            }
+            return count; 
+        };
+        int max_count = 0;
+        for (int i = 0; i < n; ++i) {
+            max_count += CountNum(i, i) + CountNum(i, i + 1);
+        }
+        return max_count;
     }
-    return cnt;
-}
-
-private void extendSubstrings(String s, int start, int end) {
-    while (start >= 0 && end < s.length() && s.charAt(start) == s.charAt(end)) {
-        start--;
-        end++;
-        cnt++;
-    }
-}
+};
 ```
 
 # 8. 判断一个整数是否是回文数
@@ -332,21 +335,22 @@ private void extendSubstrings(String s, int start, int end) {
 
 将整数分成左右两部分，右边那部分需要转置，然后判断这两部分是否相等。
 
-```java
-public boolean isPalindrome(int x) {
-    if (x == 0) {
+```c++
+class Solution {
+public:
+    bool isPalindrome(int x) {
+        if (x < 0) return false;
+        int div = 1;
+        while (x / div >= 10) div *= 10;
+        while (x > 0) {
+            if (x / div != x % 10)
+                return false;
+            x = (x % div) / 10;
+            div /= 100;
+        }
         return true;
     }
-    if (x < 0 || x % 10 == 0) {
-        return false;
-    }
-    int right = 0;
-    while (x > right) {
-        right = right * 10 + x % 10;
-        x /= 10;
-    }
-    return x == right || x == right / 10;
-}
+};
 ```
 
 # 9. 统计二进制字符串中连续 1 和连续 0 数量相同的子字符串个数
