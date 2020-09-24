@@ -9,6 +9,7 @@
 * [7. 回文子字符串个数](#7-回文子字符串个数)
 * [8. 判断一个整数是否是回文数](#8-判断一个整数是否是回文数)
 * [9. 回文切割](#9-回文切割)
+* [10. Wordbreak等其他](#9-Wordbreak等其他)
 <!-- GFM-TOC -->
 
 
@@ -407,6 +408,7 @@ private:
     }
 };
 ```
+# 10. Wordbreak等其他
 
 139. Word Break
 Medium
@@ -463,6 +465,81 @@ private:
 ```
 
 
+140. Word Break II
+```html
+Given a non-empty string s and a dictionary wordDict containing a list of non-empty words, add spaces in s to construct a sentence where each word is a valid dictionary word. Return all such possible sentences.
+
+Note:
+
+The same word in the dictionary may be reused multiple times in the segmentation.
+You may assume the dictionary does not contain duplicate words.
+Example 1:
+
+Input:
+s = "catsanddog"
+wordDict = ["cat", "cats", "and", "sand", "dog"]
+Output:
+[
+  "cats and dog",
+  "cat sand dog"
+]
+Example 2:
+
+Input:
+s = "pineapplepenapple"
+wordDict = ["apple", "pen", "applepen", "pine", "pineapple"]
+Output:
+[
+  "pine apple pen apple",
+  "pineapple pen apple",
+  "pine applepen apple"
+]
+Explanation: Note that you are allowed to reuse a dictionary word.
+Example 3:
+
+Input:
+s = "catsandog"
+wordDict = ["cats", "dog", "sand", "and", "cat"]
+Output:
+[]
+```
+
+```c++
+class Solution {
+public:
+    vector<string> wordBreak(string s, vector<string>& wordDict) {
+        unordered_set<string> word_set(wordDict.cbegin(), wordDict.cend());
+        return wordBreak(s, word_set);
+    }
+    
+private:
+    vector<string> wordBreak(string s, unordered_set<string>& wordDict) {
+        if (mem_.count(s)) 
+            return mem_[s];
+        vector<string> ans;
+        if (wordDict.count(s))
+            ans.insert(ans.end(), s);
+        for (size_t i = 1; i < s.length(); ++i) {
+            string word = s.substr(i);
+            if (!wordDict.count(word))
+                continue;
+            vector<string> candidates = AppendWord(wordBreak(s.substr(0, i), wordDict), word);
+            ans.insert(ans.end(), candidates.begin(), candidates.end());
+        }
+        return mem_[s] = ans;
+    }
+    
+    vector<string> AppendWord(vector<string> strs, string word) {
+        vector<string> new_strs;
+        for (string s : strs) {
+            new_strs.push_back(s + " " + word);
+        }
+        return new_strs;
+    }
+    
+    unordered_map<string, vector<string>> mem_;
+};
+```
 
 
 
