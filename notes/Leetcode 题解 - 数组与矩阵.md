@@ -24,18 +24,21 @@
 For example, given nums = [0, 1, 0, 3, 12], after calling your function, nums should be [1, 3, 12, 0, 0].
 ```
 
-```java
-public void moveZeroes(int[] nums) {
-    int idx = 0;
-    for (int num : nums) {
-        if (num != 0) {
-            nums[idx++] = num;
+```c++
+class Solution {
+public:
+    void moveZeroes(vector<int>& nums) {
+        // l and r either move togather or l stay at the leftest zero, and r move to the next non-zero
+        size_t l = 0, r = 0;
+        while (r < nums.size()) {
+            if (nums[r] != 0) {
+                swap(nums[l], nums[r]); // nothing happens when l and r point to the same index.
+                l++;
+            }
+            r++;
         }
     }
-    while (idx < nums.length) {
-        nums[idx++] = 0;
-    }
-}
+};
 ```
 
 # 2. 改变矩阵维度
@@ -58,22 +61,26 @@ Explanation:
 The row-traversing of nums is [1,2,3,4]. The new reshaped matrix is a 1 * 4 matrix, fill it row by row by using the previous list.
 ```
 
-```java
-public int[][] matrixReshape(int[][] nums, int r, int c) {
-    int m = nums.length, n = nums[0].length;
-    if (m * n != r * c) {
-        return nums;
-    }
-    int[][] reshapedNums = new int[r][c];
-    int index = 0;
-    for (int i = 0; i < r; i++) {
-        for (int j = 0; j < c; j++) {
-            reshapedNums[i][j] = nums[index / n][index % n];
-            index++;
+```c++
+class Solution {
+public:
+    vector<vector<int>> matrixReshape(vector<vector<int>>& nums, int r, int c) {
+        if (nums.size() == 0) return nums;
+        int old_r = nums.size();
+        int old_c = nums[0].size();
+        if (r * c != old_r * old_c) return nums;
+        
+        vector<vector<int>> ans(r, vector<int>(c));
+        for (size_t i = 0; i < old_r * old_c; ++i) {
+            int old_m = i / old_c;
+            int old_n = i % old_c;
+            int m = i / c;
+            int n = i % c; 
+            ans[m][n] = nums[old_m][old_n];
         }
+        return ans;
     }
-    return reshapedNums;
-}
+};
 ```
 
 # 3. 找出数组中最长的连续 1
@@ -82,15 +89,19 @@ public int[][] matrixReshape(int[][] nums, int r, int c) {
 
 [Leetcode](https://leetcode.com/problems/max-consecutive-ones/description/) / [力扣](https://leetcode-cn.com/problems/max-consecutive-ones/description/)
 
-```java
-public int findMaxConsecutiveOnes(int[] nums) {
-    int max = 0, cur = 0;
-    for (int x : nums) {
-        cur = x == 0 ? 0 : cur + 1;
-        max = Math.max(max, cur);
+```c++
+class Solution {
+public:
+    int findMaxConsecutiveOnes(vector<int>& nums) {
+        int ans = 0, cnt = 0;
+        for (size_t i = 0; i < nums.size(); ++i) {
+            if (nums[i] == 0) cnt = 0;
+            if (nums[i] == 1) cnt++;
+            if (cnt > ans) ans = cnt;
+        }
+        return ans;
     }
-    return max;
-}
+};
 ```
 
 # 4. 有序矩阵查找
@@ -107,18 +118,76 @@ public int findMaxConsecutiveOnes(int[] nums) {
 ]
 ```
 
-```java
-public boolean searchMatrix(int[][] matrix, int target) {
-    if (matrix == null || matrix.length == 0 || matrix[0].length == 0) return false;
-    int m = matrix.length, n = matrix[0].length;
-    int row = 0, col = n - 1;
-    while (row < m && col >= 0) {
-        if (target == matrix[row][col]) return true;
-        else if (target < matrix[row][col]) col--;
-        else row++;
+```c++
+class Solution {
+public:
+    bool searchMatrix(vector<vector<int>>& matrix, int target) {
+        if (matrix.empty() || matrix[0].empty()) return false;
+        int r = 0, c = matrix[0].size() - 1;
+        while (c >= 0 && r < matrix.size()) {
+            if (matrix[r][c] == target)
+                return true;
+            else if (matrix[r][c] < target)
+                r++;
+            else
+                c--;
+        }
+        return false;
     }
-    return false;
-}
+};
+```
+
+74\. Search a 2D Matrix (Medium)
+
+[Leetcode](https://leetcode.com/problems/search-a-2d-matrix/description/) / [力扣](https://leetcode-cn.com/problems/search-a-2d-matrix/description/)
+
+```html
+Write an efficient algorithm that searches for a value in an m x n matrix. This matrix has the following properties:
+
+Integers in each row are sorted from left to right.
+The first integer of each row is greater than the last integer of the previous row.
+Example 1:
+
+Input:
+matrix = [
+  [1,   3,  5,  7],
+  [10, 11, 16, 20],
+  [23, 30, 34, 50]
+]
+target = 3
+Output: true
+Example 2:
+
+Input:
+matrix = [
+  [1,   3,  5,  7],
+  [10, 11, 16, 20],
+  [23, 30, 34, 50]
+]
+target = 13
+Output: false
+```
+
+```c++
+class Solution {
+public:
+    bool searchMatrix(vector<vector<int>>& matrix, int target) {
+        if (matrix.empty() || matrix[0].empty()) return false;
+        int l = 0, r = matrix.size() * matrix[0].size();
+        int c = matrix[0].size();
+        while (l < r) {
+            int m = l + (r - l) / 2;
+            int m_val = matrix[m / c][m % c];
+            if (m_val == target)
+                return true;
+            else if (m_val > target)
+                r = m;
+            else
+                l = m + 1;
+        }
+        return false;
+    }
+};
 ```
 
 # 5. 有序矩阵的 Kth Element
@@ -138,27 +207,32 @@ k = 8,
 return 13.
 ```
 
-解题参考：[Share my thoughts and Clean Java Code](https://leetcode-cn.com/problems/kth-smallest-element-in-a-sorted-matrix/discuss/85173)
+解题：二分法精髓是判断往左还是往右，这道题用二分法把最大和最小值用l=mid+1, r=mid这种一次只在数值上（+1）的小操作（当然还有本身的二分切割）收敛到要求的值（Kth最小），
+所以只要判断往左还是往右，最后总能收敛到。那么怎么判断是往左还是右呢？就用到了cnt, 因为每一行都要单独算有多少个item小于mid_val, 最后cnt的数目代表了总共有多少个item小于mid_val，cnt多于k则说明小的个数多了，target的数值一定小于mid_val, 则一定往左走。往右同理。
 
 二分查找解法：
 
-```java
-public int kthSmallest(int[][] matrix, int k) {
-    int m = matrix.length, n = matrix[0].length;
-    int lo = matrix[0][0], hi = matrix[m - 1][n - 1];
-    while (lo <= hi) {
-        int mid = lo + (hi - lo) / 2;
-        int cnt = 0;
-        for (int i = 0; i < m; i++) {
-            for (int j = 0; j < n && matrix[i][j] <= mid; j++) {
-                cnt++;
+```c++
+class Solution {
+public:
+    int kthSmallest(vector<vector<int>>& matrix, int k) {
+        int c = matrix[0].size();
+        int small_val = matrix[0][0];
+        int big_val = matrix.back().back();
+        while (small_val < big_val) {
+            int cnt = 0;
+            int mid_val = small_val + (big_val - small_val) / 2;
+            for (auto& row : matrix) {
+                cnt += upper_bound(row.begin(), row.end(), mid_val) - row.begin(); // note:upper_bound returns iterator, so must to do "- row.begin()" to get int
             }
+            if (cnt < k)
+                small_val = mid_val + 1;
+            else
+                big_val = mid_val;
         }
-        if (cnt < k) lo = mid + 1;
-        else hi = mid - 1;
+        return small_val;
     }
-    return lo;
-}
+};
 ```
 
 堆解法：
