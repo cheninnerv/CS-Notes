@@ -6,7 +6,7 @@
 * [5. 有序矩阵的 Kth Element](#5-有序矩阵的-kth-element)
 * [6. 一个数组元素在 [1, n] 之间，其中一个数被替换为另一个数，找出重复的数和丢失的数](#6-一个数组元素在-[1,-n]-之间，其中一个数被替换为另一个数，找出重复的数和丢失的数)
 * [7. 找出数组中重复的数，数组值在 [1, n] 之间](#7-找出数组中重复的数，数组值在-[1,-n]-之间)
-* [8. 数组相邻差值的个数](#8-数组相邻差值的个数)
+* [8. 数组相邻差值的个数](#8-数组相邻差值的个数)[Deleted by KC]
 * [9. 数组的度](#9-数组的度)
 * [10. 对角元素相等的矩阵](#10-对角元素相等的矩阵)
 * [11. 嵌套数组](#11-嵌套数组)
@@ -236,32 +236,7 @@ public:
 ```
 
 堆解法：
-
-```java
-public int kthSmallest(int[][] matrix, int k) {
-    int m = matrix.length, n = matrix[0].length;
-    PriorityQueue<Tuple> pq = new PriorityQueue<Tuple>();
-    for(int j = 0; j < n; j++) pq.offer(new Tuple(0, j, matrix[0][j]));
-    for(int i = 0; i < k - 1; i++) { // 小根堆，去掉 k - 1 个堆顶元素，此时堆顶元素就是第 k 的数
-        Tuple t = pq.poll();
-        if(t.x == m - 1) continue;
-        pq.offer(new Tuple(t.x + 1, t.y, matrix[t.x + 1][t.y]));
-    }
-    return pq.poll().val;
-}
-
-class Tuple implements Comparable<Tuple> {
-    int x, y, val;
-    public Tuple(int x, int y, int val) {
-        this.x = x; this.y = y; this.val = val;
-    }
-
-    @Override
-    public int compareTo(Tuple that) {
-        return this.val - that.val;
-    }
-}
-```
+https://www.cnblogs.com/grandyang/p/5727892.html 解法1
 
 # 6. 一个数组元素在 [1, n] 之间，其中一个数被替换为另一个数，找出重复的数和丢失的数
 
@@ -278,31 +253,30 @@ Output: [2,3]
 Input: nums = [1,2,2,4]
 Output: [2,3]
 ```
+yy: https://www.cnblogs.com/grandyang/p/7324242.html 解法二
+精髓在于每个index存的数字应该比index大1，index 0 存1，index1存2，以此类推。那就可以用当前数字推出对应的index. 遍历每个数字，然后将其应该出现的位置上的数字变为其相反数，这样如果我们在变为其相反数之前已经成负数了，说明该数字是重复数，将其将入结果res中，然后再用index遍历原数组，如果某个位置上的数字为正数，说明该位置对应的数字没有出现过，加入res中即可.
 
-最直接的方法是先对数组进行排序，这种方法时间复杂度为 O(NlogN)。本题可以以 O(N) 的时间复杂度、O(1) 空间复杂度来求解。
+想到这个方法还是挺难的, 另外for (const auto& val : nums) 这样的写法，前面如果修改了后面nums[x]的值，则val值是会变成修改后的值得，比如遍历1， 2， 3 如果你在遍历1的时候nums[2] *= -1; 则会发生的是，遍历到3的时候val不是3而是-3. 所以重点来了： 一定要加绝对值 abs(val) - 1.
 
-主要思想是通过交换数组元素，使得数组上的元素在正确的位置上。
-
-```java
-public int[] findErrorNums(int[] nums) {
-    for (int i = 0; i < nums.length; i++) {
-        while (nums[i] != i + 1 && nums[nums[i] - 1] != nums[i]) {
-            swap(nums, i, nums[i] - 1);
+```c++
+class Solution {
+public:
+    vector<int> findErrorNums(vector<int>& nums) {
+        vector<int> ans;
+        for (const auto& val : nums) {
+            if (nums[abs(val) - 1] < 0)
+                ans.push_back(abs(val));
+            else
+                nums[abs(val) - 1] *= -1;
         }
-    }
-    for (int i = 0; i < nums.length; i++) {
-        if (nums[i] != i + 1) {
-            return new int[]{nums[i], i + 1};
+        for (int i = 0; i < nums.size(); ++i) {
+            // This index hasn't been updated means missing the corresponding number.
+            if (nums[i] > 0) // > 0 is because input is 1 ~ n
+                ans.push_back(i + 1);
         }
+        return ans;
     }
-    return null;
-}
-
-private void swap(int[] nums, int i, int j) {
-    int tmp = nums[i];
-    nums[i] = nums[j];
-    nums[j] = tmp;
-}
+};
 ```
 
 # 7. 找出数组中重复的数，数组值在 [1, n] 之间
@@ -315,69 +289,50 @@ private void swap(int[] nums, int i, int j) {
 
 二分查找解法：
 
-```java
-public int findDuplicate(int[] nums) {
-     int l = 1, h = nums.length - 1;
-     while (l <= h) {
-         int mid = l + (h - l) / 2;
-         int cnt = 0;
-         for (int i = 0; i < nums.length; i++) {
-             if (nums[i] <= mid) cnt++;
-         }
-         if (cnt > mid) h = mid - 1;
-         else l = mid + 1;
-     }
-     return l;
-}
+```c++
+class Solution {
+public:
+    int findDuplicate(vector<int>& nums) {
+        int l = 0, r = nums.size();
+        while (l < r) {
+            int m = l + (r - l) / 2;
+            int cnt = 0;
+            for (const auto& num : nums) {
+                if (num <= m)
+                    cnt++; // if normal then cnt should <= m, no matter what m, otherwise whichever break this rule is the duplicate (ans), use m to judge and r/l to converge to the ans.
+            }
+            if (cnt > m)
+                r = m;
+            else
+                l = m + 1;
+        }
+        return l;
+    }
+};
 ```
 
 双指针解法，类似于有环链表中找出环的入口：
-
-```java
-public int findDuplicate(int[] nums) {
-    int slow = nums[0], fast = nums[nums[0]];
-    while (slow != fast) {
-        slow = nums[slow];
-        fast = nums[nums[fast]];
+我懂了但没写，贴上答案：
+```c++
+class Solution {
+public:
+    int findDuplicate(vector<int>& nums) {
+        int slow = 0, fast = 0, t = 0;
+        while (true) {
+            slow = nums[slow];
+            fast = nums[nums[fast]];
+            if (slow == fast) break;
+        }
+        while (true) {
+            slow = nums[slow];
+            t = nums[t];
+            if (slow == t) break;
+        }
+        return slow;
     }
-    fast = 0;
-    while (slow != fast) {
-        slow = nums[slow];
-        fast = nums[fast];
-    }
-    return slow;
-}
+};
 ```
 
-# 8. 数组相邻差值的个数
-
-667\. Beautiful Arrangement II (Medium)
-
-[Leetcode](https://leetcode.com/problems/beautiful-arrangement-ii/description/) / [力扣](https://leetcode-cn.com/problems/beautiful-arrangement-ii/description/)
-
-```html
-Input: n = 3, k = 2
-Output: [1, 3, 2]
-Explanation: The [1, 3, 2] has three different positive integers ranging from 1 to 3, and the [2, 1] has exactly 2 distinct integers: 1 and 2.
-```
-
-题目描述：数组元素为 1\~n 的整数，要求构建数组，使得相邻元素的差值不相同的个数为 k。
-
-让前 k+1 个元素构建出 k 个不相同的差值，序列为：1 k+1 2 k 3 k-1 ... k/2 k/2+1.
-
-```java
-public int[] constructArray(int n, int k) {
-    int[] ret = new int[n];
-    ret[0] = 1;
-    for (int i = 1, interval = k; i <= k; i++, interval--) {
-        ret[i] = i % 2 == 1 ? ret[i - 1] + interval : ret[i - 1] - interval;
-    }
-    for (int i = k + 1; i < n; i++) {
-        ret[i] = i + 1;
-    }
-    return ret;
-}
-```
 
 # 9. 数组的度
 
@@ -392,32 +347,28 @@ Output: 6
 
 题目描述：数组的度定义为元素出现的最高频率，例如上面的数组度为 3。要求找到一个最小的子数组，这个子数组的度和原数组一样。
 
-```java
-public int findShortestSubArray(int[] nums) {
-    Map<Integer, Integer> numsCnt = new HashMap<>();
-    Map<Integer, Integer> numsLastIndex = new HashMap<>();
-    Map<Integer, Integer> numsFirstIndex = new HashMap<>();
-    for (int i = 0; i < nums.length; i++) {
-        int num = nums[i];
-        numsCnt.put(num, numsCnt.getOrDefault(num, 0) + 1);
-        numsLastIndex.put(num, i);
-        if (!numsFirstIndex.containsKey(num)) {
-            numsFirstIndex.put(num, i);
+```c++
+class Solution {
+public:
+    int findShortestSubArray(vector<int>& nums) {
+        unordered_map<int, vector<int>> indices;
+        int degree = 0, ans = nums.size();
+        // build num to all its indices map
+        for (size_t i = 0; i < nums.size(); ++i) {
+            indices[nums[i]].push_back(i);
+            // calculate the degree
+            degree = max(degree, static_cast<int>(indices[nums[i]].size()));
         }
+        
+        // calculate the min length that has the same degree
+        for (const auto& item : indices) {
+            if (item.second.size() == degree) {
+                ans = min(ans, item.second.back() - item.second.front() + 1);
+            }
+        }
+        return ans;
     }
-    int maxCnt = 0;
-    for (int num : nums) {
-        maxCnt = Math.max(maxCnt, numsCnt.get(num));
-    }
-    int ret = nums.length;
-    for (int i = 0; i < nums.length; i++) {
-        int num = nums[i];
-        int cnt = numsCnt.get(num);
-        if (cnt != maxCnt) continue;
-        ret = Math.min(ret, numsLastIndex.get(num) - numsFirstIndex.get(num) + 1);
-    }
-    return ret;
-}
+};
 ```
 
 # 10. 对角元素相等的矩阵
@@ -434,30 +385,18 @@ public int findShortestSubArray(int[] nums) {
 In the above grid, the diagonals are "[9]", "[5, 5]", "[1, 1, 1]", "[2, 2, 2]", "[3, 3]", "[4]", and in each diagonal all elements are the same, so the answer is True.
 ```
 
-```java
-public boolean isToeplitzMatrix(int[][] matrix) {
-    for (int i = 0; i < matrix[0].length; i++) {
-        if (!check(matrix, matrix[0][i], 0, i)) {
-            return false;
+```c++
+class Solution {
+public:
+    bool isToeplitzMatrix(vector<vector<int>>& matrix) {
+        if (matrix.empty() || matrix[0].empty()) return false;
+        for (size_t i = 0; i < matrix.size() - 1; ++i) {
+            for (size_t j = 0; j < matrix[0].size() - 1; ++j)
+                if(matrix[i][j] != matrix[i + 1][j + 1]) return false;
         }
-    }
-    for (int i = 0; i < matrix.length; i++) {
-        if (!check(matrix, matrix[i][0], i, 0)) {
-            return false;
-        }
-    }
-    return true;
-}
-
-private boolean check(int[][] matrix, int expectValue, int row, int col) {
-    if (row >= matrix.length || col >= matrix[0].length) {
         return true;
     }
-    if (matrix[row][col] != expectValue) {
-        return false;
-    }
-    return check(matrix, expectValue, row + 1, col + 1);
-}
+};
 ```
 
 # 11. 嵌套数组
@@ -478,22 +417,25 @@ S[0] = {A[0], A[5], A[6], A[2]} = {5, 6, 2, 0}
 
 题目描述：S[i] 表示一个集合，集合的第一个元素是 A[i]，第二个元素是 A[A[i]]，如此嵌套下去。求最大的 S[i]。
 
-```java
-public int arrayNesting(int[] nums) {
-    int max = 0;
-    for (int i = 0; i < nums.length; i++) {
-        int cnt = 0;
-        for (int j = i; nums[j] != -1; ) {
-            cnt++;
-            int t = nums[j];
-            nums[j] = -1; // 标记该位置已经被访问
-            j = t;
-
+```c++
+class Solution {
+public:
+    int arrayNesting(vector<int>& nums) {
+        unordered_set<int> visited;
+        int ans = 0;
+        for (int i = 0; i < nums.size(); ++i) {
+            int idx = i;
+            int cnt = 0;
+            while (!visited.count(idx)) {
+                visited.emplace(idx);
+                idx = nums[idx];
+                cnt++;
+            }
+            ans = max(ans, cnt);
         }
-        max = Math.max(max, cnt);
+        return ans;
     }
-    return max;
-}
+};
 ```
 
 # 12. 分隔数组
@@ -512,17 +454,24 @@ However, splitting into [1, 0], [2], [3], [4] is the highest number of chunks po
 
 题目描述：分隔数组，使得对每部分排序后数组就为有序。
 
-```java
-public int maxChunksToSorted(int[] arr) {
-    if (arr == null) return 0;
-    int ret = 0;
-    int right = arr[0];
-    for (int i = 0; i < arr.length; i++) {
-        right = Math.max(right, arr[i]);
-        if (right == i) ret++;
+```c++
+class Solution {
+public:
+    int maxChunksToSorted(vector<int>& arr) {
+        int ans = 0;
+        for (int i = 0; i < arr.size(); ++i) {
+            int nearest_cut_idx = arr[i];
+            for (int j = i; j <= nearest_cut_idx; ++j) {
+                nearest_cut_idx = max(nearest_cut_idx, arr[j]);
+                if (nearest_cut_idx >= arr.back())
+                    return ++ans;
+                i = j;
+            }
+            ++ans;
+        }
+        return ans;
     }
-    return ret;
-}
+};
 ```
 
 
