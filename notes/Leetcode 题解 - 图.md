@@ -198,6 +198,7 @@ Explanation: The given undirected graph will be like this:
 ```
 
 题目描述：有一系列的边连成的图，找出一条边，移除它之后该图能够成为一棵树。
+https://zxi.mytechroad.com/blog/tree/leetcode-684-redundant-connection/
 
 ```c++
 class FindUnion {
