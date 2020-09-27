@@ -204,6 +204,7 @@ https://zxi.mytechroad.com/blog/tree/leetcode-684-redundant-connection/
 class FindUnion {
 public:
     FindUnion (int size) : parent_(size + 1, 0), size_(size + 1, 1) {
+    // size + 1 because I want the list 1-based, so the index matches.
         for (int i = 0; i <= size; ++i) {
             parent_[i] = i;
         }
