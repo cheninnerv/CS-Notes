@@ -249,7 +249,117 @@ public:
 };
 ```
 
+547. Friend Circles
+Medium
+```html
+There are N students in a class. Some of them are friends, while some are not. Their friendship is transitive in nature. For example, if A is a direct friend of B, and B is a direct friend of C, then A is an indirect friend of C. And we defined a friend circle is a group of students who are direct or indirect friends.
 
+Given a N*N matrix M representing the friend relationship between students in the class. If M[i][j] = 1, then the ith and jth students are direct friends with each other, otherwise not. And you have to output the total number of friend circles among all the students.
+
+Example 1:
+
+Input: 
+[[1,1,0],
+ [1,1,0],
+ [0,0,1]]
+Output: 2
+Explanation:The 0th and 1st students are direct friends, so they are in a friend circle. 
+The 2nd student himself is in a friend circle. So return 2.
+ 
+
+Example 2:
+
+Input: 
+[[1,1,0],
+ [1,1,1],
+ [0,1,1]]
+Output: 1
+Explanation:The 0th and 1st students are direct friends, the 1st and 2nd students are direct friends, 
+so the 0th and 2nd students are indirect friends. All of them are in the same friend circle, so return 1.
+```
+```c++
+class FindUnion {
+public:
+    FindUnion (int size) : parent_(size, 0), size_(size, 1), num_of_unions_(size) {
+        for (int i = 0; i < size; ++i) {
+            parent_[i] = i;
+        }
+    }
+    
+    bool Union(int a, int b) {
+        int root_a = Find(a);
+        int root_b = Find(b);
+        if (root_a == root_b) return false;
+        if (size_[root_a] > size_[root_b]) {
+            parent_[root_b] = root_a;
+            size_[root_a] += size_[root_b];
+        } else {
+            parent_[root_a] = root_b;
+            size_[root_b] += size_[root_a];
+        }
+        num_of_unions_--;
+        return true;
+    }
+    
+    int GetNumOfUnions() {
+        return num_of_unions_;
+    }
+      
+private:
+    int Find(int node) {
+        if (node != parent_[node]) {
+            parent_[node] = Find(parent_[node]);
+        }
+        return parent_[node];
+    }
+    
+    vector<int> parent_;
+    vector<int> size_;   
+    int num_of_unions_;
+};
+
+class Solution {
+public:
+    int findCircleNum(vector<vector<int>>& M) {
+        // return Method1(M); //DFS
+        return Method2(M); //Union Find
+    }
+
+private:
+    // DFS
+    int Method1(const vector<vector<int>>& M) {
+        int ans = 0;
+        vector<bool> visited(M.size(), false);
+        for (int i = 0; i < M.size(); ++i) {
+            if (visited[i]) continue;
+            DFS(M, i, visited);
+            ans++;
+        }
+        return ans;
+    }
+    
+    void DFS(const vector<vector<int>>& M, int curr, vector<bool>& visited) {
+        for (int i = 0; i < M.size(); ++i) {
+            if (visited[i]) continue;
+            if (M[curr][i]) {
+                visited[i] = true;
+                DFS(M, i, visited);
+            }
+        }
+    }
+    
+    // union find
+    int Method2(vector<vector<int>>& M) {
+        FindUnion fu(M.size());
+        for (int i = 0; i < M.size(); ++i) {
+            for (int j = 0; j < M[0].size(); ++j) {
+                if (M[i][j]) fu.Union(i, j);
+            }
+        }
+        return fu.GetNumOfUnions();
+    }
+};
+```
 
 
 
