@@ -249,7 +249,7 @@ public:
 };
 ```
 
-547. Friend Circles
+## 547. Friend Circles
 Medium
 ```html
 There are N students in a class. Some of them are friends, while some are not. Their friendship is transitive in nature. For example, if A is a direct friend of B, and B is a direct friend of C, then A is an indirect friend of C. And we defined a friend circle is a group of students who are direct or indirect friends.
@@ -361,6 +361,146 @@ private:
 };
 ```
 
+## 305. Number of Islands II
+hard
+```html
+A 2d grid map of m rows and n columns is initially filled with water. We may perform an addLand operation which turns the water at position (row, col) into a land. Given a list of positions to operate, count the number of islands after each addLand operation. An island is surrounded by water and is formed by connecting adjacent lands horizontally or vertically. You may assume all four edges of the grid are all surrounded by water.
+
+Example:
+
+Input: m = 3, n = 3, positions = [[0,0], [0,1], [1,2], [2,1]]
+Output: [1,1,2,3]
+Explanation:
+
+Initially, the 2d grid grid is filled with water. (Assume 0 represents water and 1 represents land).
+
+0 0 0
+0 0 0
+0 0 0
+Operation #1: addLand(0, 0) turns the water at grid[0][0] into a land.
+
+1 0 0
+0 0 0   Number of islands = 1
+0 0 0
+Operation #2: addLand(0, 1) turns the water at grid[0][1] into a land.
+
+1 1 0
+0 0 0   Number of islands = 1
+0 0 0
+Operation #3: addLand(1, 2) turns the water at grid[1][2] into a land.
+
+1 1 0
+0 0 1   Number of islands = 2
+0 0 0
+Operation #4: addLand(2, 1) turns the water at grid[2][1] into a land.
+
+1 1 0
+0 0 1   Number of islands = 3
+0 1 0
+```
+
+```c++
+// A hash function used to hash a pair of any kind 
+struct hash_pair { 
+    template <class T1, class T2> 
+    size_t operator()(const pair<T1, T2>& p) const
+    { 
+        auto hash1 = hash<T1>{}(p.first); 
+        auto hash2 = hash<T2>{}(p.second); 
+        return hash1 ^ hash2; 
+    } 
+};
+
+class FindUnion {
+public:
+    FindUnion (int m, int n) : parent_{{pair{-1,-1}, pair{-1,-1}}}, size_{{pair{-1,-1}, 0}} {
+        for (int i = 0; i < m; ++i) {
+            for (int j = 0; j < n; ++j) {
+                pair p = make_pair(i, j);
+                parent_[p] = p;
+                size_[p] = 1;
+            }
+        }
+    }
+        
+    bool Union(pair<int, int> a, pair<int, int> b) {
+        pair<int, int> root_a = Find(a);
+        pair<int, int> root_b = Find(b);
+        if (root_a == root_b) return false;
+        if (size_[root_a] > size_[root_b]) {
+            parent_[root_b] = root_a;
+            size_[root_a] += size_[root_b];
+        } else {
+            parent_[root_a] = root_b;
+            size_[root_b] += size_[root_a];
+        }
+        return true;
+    }
+    
+      
+private:
+    pair<int, int> Find(pair<int, int> p) {
+        if (p != parent_[p]) {
+            parent_[p] = Find(parent_[p]);
+        }
+        return parent_[p];
+    }
+    
+    unordered_map<pair<int, int>, pair<int, int>, hash_pair> parent_;
+    unordered_map<pair<int, int>, int, hash_pair> size_;  
+};
+
+class Solution {
+public:
+    vector<int> numIslands2(int m, int n, vector<vector<int>>& positions) {
+        vector<int> ans;
+        int unions = 0;
+        vector<vector<int>> map(m, vector<int>(n));
+        FindUnion fu(m, n);
+        for (const auto& item : positions) {
+            int i = item[0], j = item[1];
+            if (map[i][j] == 1) {
+                ans.push_back(unions);
+                continue;
+            }                
+            map[i][j] = 1;
+            unions += 1;
+            pair<int, int> position_a = make_pair(i, j);
+            pair<int, int> position_b(-1, -1);
+            // top
+            if (i - 1 >= 0 && map[i - 1][j] == 1) {
+                position_b = make_pair(i - 1, j);
+                if(fu.Union(position_a, position_b))
+                    unions--;
+            }
+            // down
+            if (i + 1 < m && map[i + 1][j] == 1) {
+                position_b = make_pair(i + 1, j);
+                if(fu.Union(position_a, position_b))
+                    unions--;
+            }
+            // left
+            if (j - 1 >= 0 && map[i][j - 1] == 1) {
+                position_b = make_pair(i, j - 1);
+                if(fu.Union(position_a, position_b))
+                    unions--;
+            }
+            // right
+            if (j + 1 < n && map[i][j + 1] == 1) {
+                position_b = make_pair(i, j + 1);
+                if(fu.Union(position_a, position_b))
+                    unions--;
+            }
+            ans.push_back(unions);
+        }
+        return ans;
+    }
+};
+
+
+
+
+```
 
 
 
