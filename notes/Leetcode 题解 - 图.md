@@ -497,9 +497,126 @@ public:
     }
 };
 
+```
 
 
 
+## 721. Accounts Merge
+medium
+```html
+Given a list accounts, each element accounts[i] is a list of strings, where the first element accounts[i][0] is a name, and the rest of the elements are emails representing emails of the account.
+
+Now, we would like to merge these accounts. Two accounts definitely belong to the same person if there is some email that is common to both accounts. Note that even if two accounts have the same name, they may belong to different people as people could have the same name. A person can have any number of accounts initially, but all of their accounts definitely have the same name.
+
+After merging the accounts, return the accounts in the following format: the first element of each account is the name, and the rest of the elements are emails in sorted order. The accounts themselves can be returned in any order.
+
+Example 1:
+Input: 
+accounts = [["John", "johnsmith@mail.com", "john00@mail.com"], ["John", "johnnybravo@mail.com"], ["John", "johnsmith@mail.com", "john_newyork@mail.com"], ["Mary", "mary@mail.com"]]
+Output: [["John", 'john00@mail.com', 'john_newyork@mail.com', 'johnsmith@mail.com'],  ["John", "johnnybravo@mail.com"], ["Mary", "mary@mail.com"]]
+Explanation: 
+The first and third John's are the same person as they have the common email "johnsmith@mail.com".
+The second John and Mary are different people as none of their email addresses are used by other accounts.
+We could return these lists in any order, for example the answer [['Mary', 'mary@mail.com'], ['John', 'johnnybravo@mail.com'], 
+['John', 'john00@mail.com', 'john_newyork@mail.com', 'johnsmith@mail.com']] would still be accepted.
+Note:
+
+The length of accounts will be in the range [1, 1000].
+The length of accounts[i] will be in the range [1, 10].
+The length of accounts[i][j] will be in the range [1, 30].
+```
+```c++
+class Solution {
+public:
+    vector<vector<string>> accountsMerge(vector<vector<string>>& accounts) {
+        unordered_map<string, string> parent;
+        unordered_map<string, string> name;
+        unordered_map<string, set<string>> aggregated_emails;
+        vector<vector<string>> ans;
+        // initialization
+        for (const auto& acc : accounts) {
+            for (int i = 1; i < acc.size(); ++i) {
+                parent[acc[i]] = acc[i];
+                name[acc[i]] = acc[0];
+            }
+        }
+        
+        // build unions - update parent
+        for (const auto& acc : accounts) {
+            string parent_email = FindParent(acc[1], parent);
+            for (int i = 2; i < acc.size(); ++i)
+                parent[FindParent(acc[i], parent)] = parent_email;
+        }
+        
+        // aggregate emails
+        for (const auto& acc : accounts) {
+            for (int i = 1; i < acc.size(); ++i)
+                aggregated_emails[FindParent(acc[i], parent)].insert(acc[i]);
+        }
+        
+        // writing output
+        for (const auto& u : aggregated_emails) {
+            vector<string> entry(u.second.begin(), u.second.end());
+            entry.insert(entry.begin(), name[u.first]);
+            ans.push_back(entry);
+        }
+        return ans;
+    }
+    
+private:
+    string FindParent(string a, unordered_map<string, string>& parent) {
+        if (a != parent[a]) {
+            parent[a] = FindParent(parent[a], parent);
+        }
+        return parent[a];
+    }
+};
+```
+
+## 261. Graph Valid Tree
+medium
+```html
+Given n nodes labeled from 0 to n-1 and a list of undirected edges (each edge is a pair of nodes), write a function to check whether these edges make up a valid tree.
+
+Example 1:
+
+Input: n = 5, and edges = [[0,1], [0,2], [0,3], [1,4]]
+Output: true
+Example 2:
+
+Input: n = 5, and edges = [[0,1], [1,2], [2,3], [1,3], [1,4]]
+Output: false
+Note: you can assume that no duplicate edges will appear in edges. Since all edges are undirected, [0,1] is the same as [1,0] and thus will not appear together in edges.
+```
+```c++
+class Solution {
+public:
+    bool validTree(int n, vector<vector<int>>& edges) {
+        vector<int> parent(n);
+        for (int i = 0; i < n; ++i)
+            parent[i] = i;
+        for (const auto& edge : edges) {
+            if (!Union(edge[0], edge[1], parent))
+                return false;
+        }
+        return edges.size() == n - 1;
+    }
+    
+private:
+    bool Union(int a, int b, vector<int>& parent) {     
+        int root_a = Find(a, parent);
+        int root_b = Find(b, parent);
+        if (root_a == root_b) return false;     
+        parent[root_b] = root_a;
+        return true;
+    }
+    
+    int Find(int node, vector<int>& parent) {
+        if (node != parent[node])
+            parent[node] = Find(parent[node], parent);
+        return parent[node];
+    }
+};
 ```
 
 
