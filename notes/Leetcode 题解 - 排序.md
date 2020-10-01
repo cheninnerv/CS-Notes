@@ -113,37 +113,80 @@ private:
 Given [1,1,1,2,2,3] and k = 2, return [1,2].
 ```
 
-设置若干个桶，每个桶存储出现频率相同的数。桶的下标表示数出现的频率，即第 i 个桶中存储的数出现的频率为 i。
+设置若干个桶，每个桶存储出现频率相同的数。桶的下标表示数出现的频率，即第 i 个桶中存储的数出现的频率为 i, 注意idx要加1（因为出现次数是1based）。
 
 把数都放到桶之后，从后向前遍历桶，最先得到的 k 个数就是出现频率最多的的 k 个数。
 
-```java
-public List<Integer> topKFrequent(int[] nums, int k) {
-    Map<Integer, Integer> frequencyForNum = new HashMap<>();
-    for (int num : nums) {
-        frequencyForNum.put(num, frequencyForNum.getOrDefault(num, 0) + 1);
-    }
-    List<Integer>[] buckets = new ArrayList[nums.length + 1];
-    for (int key : frequencyForNum.keySet()) {
-        int frequency = frequencyForNum.get(key);
-        if (buckets[frequency] == null) {
-            buckets[frequency] = new ArrayList<>();
+```c++
+class Solution {
+public:
+    vector<int> topKFrequent(vector<int>& nums, int k) {
+        unordered_map<int, int> freq;
+        vector<int> ans;
+        vector<vector<int>> bucket(nums.size() + 1);
+        for (const auto& n : nums)
+            freq[n]++;
+        for (const auto& entry : freq)
+            bucket[entry.second].push_back(entry.first);
+        for (int i = bucket.size() - 1; i >= 0; --i) {
+            if (!bucket[i].size()) continue;
+            for (int j = 0; j < bucket[i].size(); ++j) {
+                ans.push_back(bucket[i][j]);
+                if (ans.size() == k)
+                    return ans;
+            }
         }
-        buckets[frequency].add(key);
+        return {};
     }
-    List<Integer> topK = new ArrayList<>();
-    for (int i = buckets.length - 1; i >= 0 && topK.size() < k; i--) {
-        if (buckets[i] == null) {
-            continue;
+};
+```
+
+## 692 Top K Frequent Words
+
+```html
+Given a non-empty list of words, return the k most frequent elements.
+
+Your answer should be sorted by frequency from highest to lowest. If two words have the same frequency, then the word with the lower alphabetical order comes first.
+
+Example 1:
+Input: ["i", "love", "leetcode", "i", "love", "coding"], k = 2
+Output: ["i", "love"]
+Explanation: "i" and "love" are the two most frequent words.
+    Note that "i" comes before "love" due to a lower alphabetical order.
+Example 2:
+Input: ["the", "day", "is", "sunny", "the", "the", "the", "sunny", "is", "is"], k = 4
+Output: ["the", "is", "sunny", "day"]
+Explanation: "the", "is", "sunny" and "day" are the four most frequent words,
+    with the number of occurrence being 4, 3, 2 and 1 respectively.
+Note:
+You may assume k is always valid, 1 ≤ k ≤ number of unique elements.
+Input words contain only lowercase letters.
+Follow up:
+Try to solve it in O(n log k) time and O(n) extra space.
+```
+```c++
+class Solution {
+public:
+    vector<string> topKFrequent(vector<string>& words, int k) {
+        vector<string> ans;
+        unordered_map<string, int> freq;
+        vector<vector<string>> bucket(words.size() + 1);
+        for (const auto& w : words)
+            freq[w]++;
+        for (const auto& entry : freq)
+            bucket[entry.second].push_back(entry.first);
+        for (int i = bucket.size() - 1; i >= 0; --i) {
+            if (bucket[i].size())
+                sort(bucket[i].begin(), bucket[i].end());
+            for (int j = 0; j < bucket[i].size(); ++j) {
+                ans.push_back(bucket[i][j]);
+                if (ans.size() == k)
+                    return ans;
+            }
         }
-        if (buckets[i].size() <= (k - topK.size())) {
-            topK.addAll(buckets[i]);
-        } else {
-            topK.addAll(buckets[i].subList(0, k - topK.size()));
-        }
+        return ans;
     }
-    return topK;
-}
+};
 ```
 
 ## 2. 按照字符出现次数对字符串排序
@@ -163,34 +206,47 @@ Explanation:
 'e' appears twice while 'r' and 't' both appear once.
 So 'e' must appear before both 'r' and 't'. Therefore "eetr" is also a valid answer.
 ```
+kc: 很重要的影响运行时间的两点： 
+1) unordered_map to map is from O(1) to O(logk) k:key.
+2) 对计数数组的sort is much faster than 完整的数组（string) is because freq_char's size is much smaller than s.length().
 
-```java
-public String frequencySort(String s) {
-    Map<Character, Integer> frequencyForNum = new HashMap<>();
-    for (char c : s.toCharArray())
-        frequencyForNum.put(c, frequencyForNum.getOrDefault(c, 0) + 1);
+```c++
+// 108 ms
+class Solution {
+public:
+    string frequencySort(string s) {
+        vector<int> freq(128); // ASCII
+        for (const auto& c : s)
+            freq[c]++;
+        sort(s.begin(), s.end(), [&](int a, int b) {
+            return freq[a] > freq[b] || (freq[a] == freq[b] && a > b);
+        });
+        return s;
+    }
+};
 
-    List<Character>[] frequencyBucket = new ArrayList[s.length() + 1];
-    for (char c : frequencyForNum.keySet()) {
-        int f = frequencyForNum.get(c);
-        if (frequencyBucket[f] == null) {
-            frequencyBucket[f] = new ArrayList<>();
+
+// 8 ms
+class Solution {
+public:
+    string frequencySort(string s) {
+        vector<int> freq(128); // ASCII
+        vector<pair<int, char>> freq_char;
+        for (const auto& c : s)
+            freq[c]++;
+        for (int i = 0; i < freq.size(); ++i) {
+            if (freq[i] > 0)
+                freq_char.push_back(make_pair(freq[i], i));
         }
-        frequencyBucket[f].add(c);
+        // 1) unordered_map to map is from O(1) to O(logk) k:key
+        // 2) here the sort is much faster is because freq_char's size is much smaller than s.length()
+        sort(freq_char.rbegin(), freq_char.rend());
+        string ans;
+        for (const auto& p : freq_char)
+            ans.append(p.first, p.second);     
+        return ans;
     }
-    StringBuilder str = new StringBuilder();
-    for (int i = frequencyBucket.length - 1; i >= 0; i--) {
-        if (frequencyBucket[i] == null) {
-            continue;
-        }
-        for (char c : frequencyBucket[i]) {
-            for (int j = 0; j < i; j++) {
-                str.append(c);
-            }
-        }
-    }
-    return str.toString();
-}
+};
 ```
 
 # 荷兰国旗问题
@@ -215,25 +271,19 @@ Output: [0,0,1,1,2,2]
 
 题目描述：只有 0/1/2 三种颜色。
 
-```java
-public void sortColors(int[] nums) {
-    int zero = -1, one = 0, two = nums.length;
-    while (one < two) {
-        if (nums[one] == 0) {
-            swap(nums, ++zero, one++);
-        } else if (nums[one] == 2) {
-            swap(nums, --two, one);
-        } else {
-            ++one;
+```c++
+class Solution {
+public:
+    void sortColors(vector<int>& nums) {
+        int l = 0, r = nums.size() - 1;
+        for (int m = 0; m < nums.size(); ++m) {
+            while ((nums[m] == 0 && m >= l) || (nums[m] == 2 && m <= r)) {
+                if (nums[m] == 0 && m >= l) swap(nums[m], nums[l++]);
+                if (nums[m] == 2 && m <= r) swap(nums[m], nums[r--]);
+            }
         }
     }
-}
-
-private void swap(int[] nums, int i, int j) {
-    int t = nums[i];
-    nums[i] = nums[j];
-    nums[j] = t;
-}
+};
 ```
 
 
