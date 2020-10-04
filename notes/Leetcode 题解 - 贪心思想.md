@@ -37,20 +37,22 @@ Output: 2
 
 <div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/e69537d2-a016-4676-b169-9ea17eeb9037.gif" width="430px"> </div><br>
 
-```java
-public int findContentChildren(int[] grid, int[] size) {
-    if (grid == null || size == null) return 0;
-    Arrays.sort(grid);
-    Arrays.sort(size);
-    int gi = 0, si = 0;
-    while (gi < grid.length && si < size.length) {
-        if (grid[gi] <= size[si]) {
-            gi++;
+```c++
+class Solution {
+public:
+    int findContentChildren(vector<int>& g, vector<int>& s) {
+        sort(g.begin(), g.end());
+        sort(s.begin(), s.end());
+        int ans = 0;
+        for (int i = 0, j = 0; i < g.size() && j < s.size(); ++j) {
+            if (g[i] <= s[j]) {
+                ans++;
+                i++;
+            }
         }
-        si++;
+        return ans;
     }
-    return gi;
-}
+};
 ```
 
 # 2. 不重叠的区间个数
@@ -77,41 +79,31 @@ Explanation: You don't need to remove any of the intervals since they're already
 
 题目描述：计算让一组区间不重叠所需要移除的区间个数。
 
-先计算最多能组成的不重叠区间个数，然后用区间总个数减去不重叠区间的个数。
+kc: 贪心的概念就是选局部最优解! 两个重叠区间谁end越大越容易和后面overlap，于是无脑删end大的那个。
+另外，vector<pair<int, int>> vector<vector<int>>都会按第一个int元素去sort吗？
 
-在每次选择中，区间的结尾最为重要，选择的区间结尾越小，留给后面的区间的空间越大，那么后面能够选择的区间个数也就越大。
-
-按区间的结尾进行排序，每次选择结尾最小，并且和前一个区间不重叠的区间。
-
-```java
-public int eraseOverlapIntervals(int[][] intervals) {
-    if (intervals.length == 0) {
-        return 0;
-    }
-    Arrays.sort(intervals, Comparator.comparingInt(o -> o[1]));
-    int cnt = 1;
-    int end = intervals[0][1];
-    for (int i = 1; i < intervals.length; i++) {
-        if (intervals[i][0] < end) {
-            continue;
+```c++
+class Solution {
+public:
+    int eraseOverlapIntervals(vector<vector<int>>& intervals) {
+        sort(intervals.begin(), intervals.end());
+        int ans = 0, l = 0, r = 1;
+        while (r < intervals.size()) {
+            // if overlapped, compare l and r, and delete the one with bigger end.
+            if (intervals[l][1] > intervals[r][0]) {
+                l = intervals[l][1] > intervals[r][1] ? r : l;
+                r++;
+                ans++;
+            } else {
+                l = r;
+                r++;
+            }
         }
-        end = intervals[i][1];
-        cnt++;
+        return ans;
     }
-    return intervals.length - cnt;
-}
+};
 ```
 
-使用 lambda 表示式创建 Comparator 会导致算法运行时间过长，如果注重运行时间，可以修改为普通创建 Comparator 语句：
-
-```java
-Arrays.sort(intervals, new Comparator<int[]>() {
-    @Override
-    public int compare(int[] o1, int[] o2) {
-        return o1[1] - o2[1];
-    }
-});
-```
 
 # 3. 投飞镖刺破气球
 
@@ -131,22 +123,26 @@ Output:
 
 也是计算不重叠的区间个数，不过和 Non-overlapping Intervals 的区别在于，[1, 2] 和 [2, 3] 在本题中算是重叠区间。
 
-```java
-public int findMinArrowShots(int[][] points) {
-    if (points.length == 0) {
-        return 0;
-    }
-    Arrays.sort(points, Comparator.comparingInt(o -> o[1]));
-    int cnt = 1, end = points[0][1];
-    for (int i = 1; i < points.length; i++) {
-        if (points[i][0] <= end) {
-            continue;
+```c++
+class Solution {
+public:
+    int findMinArrowShots(vector<vector<int>>& points) {
+        if (points.empty()) return 0;
+        sort(points.begin(), points.end());
+        int l_end = points[0][1], r = 1, ans = 1;
+        while (r < points.size()) {
+            if (l_end >= points[r][0]) {
+                l_end = min(l_end, points[r][1]);
+                r++;
+            } else {
+                ans++;
+                l_end = points[r][1];
+                r++;
+            }
         }
-        cnt++;
-        end = points[i][1];
+        return ans;
     }
-    return cnt;
-}
+};
 ```
 
 # 4. 根据身高和序号重组队列
@@ -169,18 +165,21 @@ Output:
 
 身高 h 降序、个数 k 值升序，然后将某个学生插入队列的第 k 个位置中。
 
-```java
-public int[][] reconstructQueue(int[][] people) {
-    if (people == null || people.length == 0 || people[0].length == 0) {
-        return new int[0][0];
+```c++
+class Solution {
+public:
+    vector<vector<int>> reconstructQueue(vector<vector<int>>& people) {
+        sort(people.begin(), people.end(), [&] (vector<int> a, vector<int> b) {
+            return a[0] > b[0] || (a[0] == b[0] && a[1] < b[1]);
+        });
+        for (int i = 0; i < people.size(); ++i) {
+            auto p_copy = people[i];
+            people.erase(people.begin() + i);
+            people.insert(people.begin() + p_copy[1], p_copy);
+        }
+        return people;
     }
-    Arrays.sort(people, (a, b) -> (a[0] == b[0] ? a[1] - b[1] : b[0] - a[0]));
-    List<int[]> queue = new ArrayList<>();
-    for (int[] p : people) {
-        queue.add(p[1], p);
-    }
-    return queue.toArray(new int[queue.size()][]);
-}
+};
 ```
 
 # 5. 买卖股票最大的收益
@@ -191,20 +190,20 @@ public int[][] reconstructQueue(int[][] people) {
 
 题目描述：一次股票交易包含买入和卖出，只进行一次交易，求最大收益。
 
-只要记录前面的最小价格，将这个最小价格作为买入价格，然后将当前的价格作为售出价格，查看当前收益是不是最大收益。
+只要一直记录前面的最小价格，然后不断将当前的价格作为售出价格比较，查看当前收益是不是最大收益。
 
-```java
-public int maxProfit(int[] prices) {
-    int n = prices.length;
-    if (n == 0) return 0;
-    int soFarMin = prices[0];
-    int max = 0;
-    for (int i = 1; i < n; i++) {
-        if (soFarMin > prices[i]) soFarMin = prices[i];
-        else max = Math.max(max, prices[i] - soFarMin);
+```c++
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        int min_so_far = INT_MAX, ans = 0;
+        for (int i = 0; i < prices.size(); ++i) {
+            min_so_far = min(min_so_far, prices[i]);
+            ans = max(ans, prices[i] - min_so_far);
+        }
+        return ans;
     }
-    return max;
-}
+};
 ```
 
 
@@ -216,18 +215,18 @@ public int maxProfit(int[] prices) {
 
 题目描述：可以进行多次交易，多次交易之间不能交叉进行，可以进行多次交易。
 
-对于 [a, b, c, d]，如果有 a <= b <= c <= d ，那么最大收益为 d - a。而 d - a = (d - c) + (c - b) + (b - a) ，因此当访问到一个 prices[i] 且 prices[i] - prices[i-1] > 0，那么就把 prices[i] - prices[i-1] 添加到收益中。
+对于 [a, b, c, d]，如果有 a <= b <= c <= d ，那么最大收益为 d - a。而 d - a = (d - c) + (c - b) + (b - a) ，这题换句话说就是，股票涨的时候就买(prices[i] < prices[i + 1])，跌的时候不买。这样收益最大。还是greedy. 因此当访问到一个 prices[i] 且 prices[i] - prices[i-1] > 0，那么就把 prices[i] - prices[i-1] 添加到收益中。
 
-```java
-public int maxProfit(int[] prices) {
-    int profit = 0;
-    for (int i = 1; i < prices.length; i++) {
-        if (prices[i] > prices[i - 1]) {
-            profit += (prices[i] - prices[i - 1]);
-        }
+```c++
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        int ans = 0;
+        for (int i = 0; i < prices.size() - 1; ++i)
+            ans += prices[i] < prices[i + 1] ? prices[i + 1] - prices[i] : 0;
+        return ans;
     }
-    return profit;
-}
+};
 ```
 
 
@@ -243,24 +242,25 @@ Output: True
 ```
 
 题目描述：flowerbed 数组中 1 表示已经种下了花朵。花朵之间至少需要一个单位的间隔，求解是否能种下 n 朵花。
+遍历每个index，如果当前index对应的数字是1，就跳过，否则看其前一位和后一位是否都是0，如果是的话就可以种一朵花，并且要把当前位的数字变成1。
 
-```java
-public boolean canPlaceFlowers(int[] flowerbed, int n) {
-    int len = flowerbed.length;
-    int cnt = 0;
-    for (int i = 0; i < len && cnt < n; i++) {
-        if (flowerbed[i] == 1) {
-            continue;
+```c++
+class Solution {
+public:
+    bool canPlaceFlowers(vector<int>& flowerbed, int n) {
+        flowerbed.insert(flowerbed.begin(), 0);
+        flowerbed.push_back(0);
+        for (int i = 1; i < flowerbed.size() - 1; ++i) {
+            if (flowerbed[i] == 0) {
+                if (flowerbed[i - 1] == 0 && flowerbed[i + 1] == 0) {
+                    flowerbed[i] = 1;
+                    n--;
+                }
+            }     
         }
-        int pre = i == 0 ? 0 : flowerbed[i - 1];
-        int next = i == len - 1 ? 0 : flowerbed[i + 1];
-        if (pre == 0 && next == 0) {
-            cnt++;
-            flowerbed[i] = 1;
-        }
+        return n <= 0;
     }
-    return cnt >= n;
-}
+};
 ```
 
 # 8. 判断是否为子序列
@@ -273,18 +273,39 @@ public boolean canPlaceFlowers(int[] flowerbed, int n) {
 s = "abc", t = "ahbgdc"
 Return true.
 ```
-
-```java
-public boolean isSubsequence(String s, String t) {
-    int index = -1;
-    for (char c : s.toCharArray()) {
-        index = t.indexOf(c, index + 1);
-        if (index == -1) {
-            return false;
+题目中的 Follow up 说如果有大量的字符串s，问我们如何进行优化。那么既然字符串t始终保持不变，我们就可以在t上做一些文章。子序列虽然不需要是连着的子串，但是字符之间的顺序是需要的，那么我们可以建立字符串t中的每个字符跟其位置直接的映射，由于t中可能会出现重复字符，所以把相同的字符出现的所有位置按顺序加到一个数组中，所以就是用 HashMap 来建立每个字符和其位置数组之间的映射。然后遍历字符串s中的每个字符，对于每个遍历到的字符c，我们到 HashMap 中的对应的字符数组中去搜索，由于位置数组是有序的，我们使用二分搜索来加快搜索速度，这里需要注意的是，由于子序列是有顺序要求的，所以需要一个变量 pre 来记录当前匹配到t字符串中的位置，对于当前s串中的字符c，即便在t串中存在，但是若其在位置 pre 之前，也是不能匹配的。所以我们可以使用 uppper_bound() 来二分查找第一个大于 pre 的位置，若不存在，直接返回 false，否则将 pre 更新为二分查找的结果并继续循环即可，参见代码如下：
+```c++
+class Solution {
+public:
+    bool isSubsequence(string s, string t) {
+        if (s.empty()) return true;
+        int s_idx = 0, t_idx = 0;
+        for (int t_idx = 0; t_idx < t.length(); ++t_idx) {
+            if (s_idx == s.length()) return true;
+            if (t.at(t_idx) == s.at(s_idx))
+                s_idx++;
         }
+        return s_idx == s.length();
     }
-    return true;
-}
+};
+
+// follow up
+class Solution {
+public:
+    bool isSubsequence(string s, string t) {
+        unordered_map<char, vector<int>> char2idxes;
+        int pre = -1;
+        for (int i = 0; i < t.length(); ++i) 
+            char2idxes[t.at(i)].push_back(i);
+        for (int j = 0; j < s.length(); ++j) {
+            auto it = upper_bound(char2idxes[s.at(j)].begin(), char2idxes[s.at(j)].end(), pre);
+            if (it == char2idxes[s.at(j)].end())
+                return false;
+            pre = *it;
+        }
+        return true;
+    }
+};
 ```
 
 # 9. 修改一个数成为非递减数组
@@ -303,22 +324,23 @@ Explanation: You could modify the first 4 to 1 to get a non-decreasing array.
 
 在出现 nums[i] < nums[i - 1] 时，需要考虑的是应该修改数组的哪个数，使得本次修改能使 i 之前的数组成为非递减数组，并且   **不影响后续的操作**  。优先考虑令 nums[i - 1] = nums[i]，因为如果修改 nums[i] = nums[i - 1] 的话，那么 nums[i] 这个数会变大，就有可能比 nums[i + 1] 大，从而影响了后续操作。还有一个比较特别的情况就是 nums[i] < nums[i - 2]，修改 nums[i - 1] = nums[i] 不能使数组成为非递减数组，只能修改 nums[i] = nums[i - 1]。
 
-```java
-public boolean checkPossibility(int[] nums) {
-    int cnt = 0;
-    for (int i = 1; i < nums.length && cnt < 2; i++) {
-        if (nums[i] >= nums[i - 1]) {
-            continue;
+```c++
+class Solution {
+public:
+    bool checkPossibility(vector<int>& nums) {
+        int cnt = 1;
+        for (int i = 1; i < nums.size(); ++i) {
+            if (nums[i - 1] > nums[i]) {
+                if (cnt <= 0) return false;
+                if (i - 2 >= 0 && nums[i - 2] > nums[i])
+                    nums[i] = nums[i - 1];
+                // no need for else
+                cnt--;
+            }
         }
-        cnt++;
-        if (i - 2 >= 0 && nums[i - 2] > nums[i]) {
-            nums[i] = nums[i - 1];
-        } else {
-            nums[i - 1] = nums[i];
-        }
+        return true;
     }
-    return cnt <= 1;
-}
+};
 ```
 
 
@@ -334,19 +356,47 @@ For example, given the array [-2,1,-3,4,-1,2,1,-5,4],
 the contiguous subarray [4,-1,2,1] has the largest sum = 6.
 ```
 
-```java
-public int maxSubArray(int[] nums) {
-    if (nums == null || nums.length == 0) {
-        return 0;
+In follow up, 题目还要求我们用分治法 Divide and Conquer Approach 来解，这个分治法的思想就类似于二分搜索法，需要把数组一分为二，分别找出左边和右边的最大子数组之和，然后还要从中间开始向左右分别扫描，求出的最大值分别和左右两边得出的最大值相比较取最大的那一个.
+
+```c++
+class Solution {
+public:
+    int maxSubArray(vector<int>& nums) {
+        int pre_max = nums[0], ans = nums[0];
+        for (int i = 1; i < nums.size(); ++i) {
+            pre_max = max(pre_max + nums[i], nums[i]); 
+            ans = max(ans, pre_max);
+        }
+        return ans;
     }
-    int preSum = nums[0];
-    int maxSum = preSum;
-    for (int i = 1; i < nums.length; i++) {
-        preSum = preSum > 0 ? preSum + nums[i] : nums[i];
-        maxSum = Math.max(maxSum, preSum);
+};
+
+// follow up 
+class Solution {
+public:
+    int maxSubArray(vector<int>& nums) {
+        return DivideConquer(nums, 0, nums.size() - 1);
     }
-    return maxSum;
-}
+
+private:
+    int DivideConquer(vector<int>& nums, int l, int r) {
+        if (l >= r) return nums[l];
+        int m = l + (r - l) / 2;
+        int l_max = DivideConquer(nums, l, m - 1);
+        int r_max = DivideConquer(nums, m + 1, r);
+        int m_val = nums[m], m_max = nums[m];
+        for (int i = m - 1; i >= l; --i) {
+            m_val += nums[i];
+            m_max = max(m_max, m_val);
+        }
+        m_val = m_max;
+        for (int i = m + 1; i <= r; ++i) {
+            m_val += nums[i];
+            m_max = max(m_max, m_val);
+        }
+        return max(m_max, max(l_max, r_max));
+    }
+};
 ```
 
 # 11. 分隔字符串使同种字符出现在一起
@@ -364,31 +414,27 @@ This is a partition so that each letter appears in at most one part.
 A partition like "ababcbacadefegde", "hijhklij" is incorrect, because it splits S into less parts.
 ```
 
-```java
-public List<Integer> partitionLabels(String S) {
-    int[] lastIndexsOfChar = new int[26];
-    for (int i = 0; i < S.length(); i++) {
-        lastIndexsOfChar[char2Index(S.charAt(i))] = i;
-    }
-    List<Integer> partitions = new ArrayList<>();
-    int firstIndex = 0;
-    while (firstIndex < S.length()) {
-        int lastIndex = firstIndex;
-        for (int i = firstIndex; i < S.length() && i <= lastIndex; i++) {
-            int index = lastIndexsOfChar[char2Index(S.charAt(i))];
-            if (index > lastIndex) {
-                lastIndex = index;
+这题和56 Merge Intervals 一样是青蛙跳跃题，往后跳那类。
+
+```c++
+class Solution {
+public:
+    vector<int> partitionLabels(string S) {
+        unordered_map<char, int> last_idx;
+        vector<int> ans;
+        int begin = 0, end = 0;
+        for (int i = 0; i < S.length(); ++i)
+            last_idx[S.at(i)] = i;
+        for (int i = 0; i < S.length(); ++i) {
+            end = max(end, last_idx[S.at(i)]);
+            if (i == end) {
+                ans.push_back(end - begin + 1);
+                begin = end + 1;
             }
         }
-        partitions.add(lastIndex - firstIndex + 1);
-        firstIndex = lastIndex + 1;
+        return ans;
     }
-    return partitions;
-}
-
-private int char2Index(char c) {
-    return c - 'a';
-}
+};
 ```
 
 
