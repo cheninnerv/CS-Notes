@@ -74,40 +74,33 @@
 
 题目描述：0 表示可以经过某个位置，求解从左上角到右下角的最短路径长度。
 
-```java
-public int shortestPathBinaryMatrix(int[][] grids) {
-        if (grids == null || grids.length == 0 || grids[0].length == 0) {
-            return -1;
-        }
-        int[][] direction = {{1, -1}, {1, 0}, {1, 1}, {0, -1}, {0, 1}, {-1, -1}, {-1, 0}, {-1, 1}};
-        int m = grids.length, n = grids[0].length;
-        Queue<Pair<Integer, Integer>> queue = new LinkedList<>();
-        queue.add(new Pair<>(0, 0));
-        int pathLength = 0;
-        while (!queue.isEmpty()) {
-            int size = queue.size();
-            pathLength++;
-            while (size-- > 0) {
-                Pair<Integer, Integer> cur = queue.poll();
-                int cr = cur.getKey(), cc = cur.getValue();
-                if (grids[cr][cc] == 1) {
-                    continue;
-                }
-                if (cr == m - 1 && cc == n - 1) {
-                    return pathLength;
-                }
-                grids[cr][cc] = 1; // 标记
-                for (int[] d : direction) {
-                    int nr = cr + d[0], nc = cc + d[1];
-                    if (nr < 0 || nr >= m || nc < 0 || nc >= n) {
-                        continue;
-                    }
-                    queue.add(new Pair<>(nr, nc));
+```c++
+class Solution {
+public:
+    int shortestPathBinaryMatrix(vector<vector<int>>& grid) {
+        int steps = 0, n = grid.size();
+        queue<pair<int, int>> q1; q1.push({0,0});
+        while (!q1.empty()) {
+            steps ++;
+            queue<pair<int, int>> q2;
+            while (!q1.empty()) {
+                auto e = q1.front(); q1.pop();
+                if (e.first >= 0 && e.first < n && 
+                    e.second >= 0 && e.second < n &&
+                    grid[e.first][e.second] != 1) {
+                    if (e.first == n - 1 && e.second == n - 1) return steps;
+                    grid[e.first][e.second] = 1;
+                    for (int i = -1; i < 2; ++i)
+                        for (int j = -1; j < 2; ++j)
+                            if (!(i == 0 && j == 0)) q2.push({e.first + i, e.second + j});
                 }
             }
+            swap(q1, q2);
         }
         return -1;
     }
+};
+
 ```
 
 ## 2. 组成整数的最小平方数数量
@@ -120,59 +113,38 @@ public int shortestPathBinaryMatrix(int[][] grids) {
 For example, given n = 12, return 3 because 12 = 4 + 4 + 4; given n = 13, return 2 because 13 = 4 + 9.
 ```
 
-可以将每个整数看成图中的一个节点，如果两个整数之差为一个平方数，那么这两个整数所在的节点就有一条边。
-
-要求解最小的平方数数量，就是求解从节点 n 到节点 0 的最短路径。
-
 本题也可以用动态规划求解，在之后动态规划部分中会再次出现。
 
-```java
-public int numSquares(int n) {
-    List<Integer> squares = generateSquares(n);
-    Queue<Integer> queue = new LinkedList<>();
-    boolean[] marked = new boolean[n + 1];
-    queue.add(n);
-    marked[n] = true;
-    int level = 0;
-    while (!queue.isEmpty()) {
-        int size = queue.size();
-        level++;
-        while (size-- > 0) {
-            int cur = queue.poll();
-            for (int s : squares) {
-                int next = cur - s;
-                if (next < 0) {
-                    break;
-                }
-                if (next == 0) {
-                    return level;
-                }
-                if (marked[next]) {
-                    continue;
-                }
-                marked[next] = true;
-                queue.add(next);
+```c++
+class Solution {
+public:
+    // DP
+    int numSquares(int n) {
+        vector<int> dp(n + 1, INT_MAX);
+        for (int i = 0; i < n + 1; ++i) {
+            if (i < 4) {
+                dp[i] = i; continue;
+            }
+            for (int j = 1; j * j <= i; ++j) {
+                dp[i] = min(dp[i], dp[i - j * j] + 1);
             }
         }
+        return dp[n];
+     }
+    
+    // Math
+    int numSquares(int n) {
+        while (n % 4 == 0) n /= 4;
+        if (n % 8 == 7) return 4;
+        for (int a = 0; a * a <= n; ++a) {
+            int b = sqrt(n - a * a);
+            if (a * a + b * b == n) {
+                return a > 0 && b > 0 ? 2 : 1;
+            }
+        }
+        return 3;
     }
-    return n;
-}
-
-/**
- * 生成小于 n 的平方数序列
- * @return 1,4,9,...
- */
-private List<Integer> generateSquares(int n) {
-    List<Integer> squares = new ArrayList<>();
-    int square = 1;
-    int diff = 3;
-    while (square <= n) {
-        squares.add(square);
-        square += diff;
-        diff += 2;
-    }
-    return squares;
-}
+};
 ```
 
 ## 3. 最短单词路径
@@ -205,72 +177,74 @@ Explanation: The endWord "cog" is not in wordList, therefore no possible transfo
 ```
 
 题目描述：找出一条从 beginWord 到 endWord 的最短路径，每次移动规定为改变一个字符，并且改变之后的字符串必须在 wordList 中。
+kc: 花花酱讲的很好。https://zxi.mytechroad.com/blog/searching/127-word-ladder/
 
-```java
-public int ladderLength(String beginWord, String endWord, List<String> wordList) {
-    wordList.add(beginWord);
-    int N = wordList.size();
-    int start = N - 1;
-    int end = 0;
-    while (end < N && !wordList.get(end).equals(endWord)) {
-        end++;
-    }
-    if (end == N) {
+```c++
+class Solution {
+public:
+    // BFS 96 ms
+    int ladderLength(string beginWord, string endWord, vector<string>& wordList) {
+        if (wordList.empty()) return 0;
+        int len = wordList[0].length(), steps = 0;
+        unordered_set<string> dict;
+        for (string word : wordList)
+            dict.insert(word);
+        queue<string> q;
+        q.push(beginWord);
+        while (!q.empty()) {
+            steps++;
+            int size = q.size();
+            for (int j = size; j > 0; --j) {
+                string s = q.front(); q.pop();
+                for (int i = 0; i < len; ++i) {
+                    char tmp = s[i];
+                    for (char c = 'a'; c <= 'z'; ++c) {
+                        s[i] = c;
+                        if (dict.count(s)) {
+                            if (s == endWord) return steps + 1;
+                            q.push(s);
+                            dict.erase(s);
+                        }
+                    }
+                    s[i] = tmp;
+                }
+            }
+        }
         return 0;
     }
-    List<Integer>[] graphic = buildGraphic(wordList);
-    return getShortestPath(graphic, start, end);
-}
-
-private List<Integer>[] buildGraphic(List<String> wordList) {
-    int N = wordList.size();
-    List<Integer>[] graphic = new List[N];
-    for (int i = 0; i < N; i++) {
-        graphic[i] = new ArrayList<>();
-        for (int j = 0; j < N; j++) {
-            if (isConnect(wordList.get(i), wordList.get(j))) {
-                graphic[i].add(j);
-            }
-        }
-    }
-    return graphic;
-}
-
-private boolean isConnect(String s1, String s2) {
-    int diffCnt = 0;
-    for (int i = 0; i < s1.length() && diffCnt <= 1; i++) {
-        if (s1.charAt(i) != s2.charAt(i)) {
-            diffCnt++;
-        }
-    }
-    return diffCnt == 1;
-}
-
-private int getShortestPath(List<Integer>[] graphic, int start, int end) {
-    Queue<Integer> queue = new LinkedList<>();
-    boolean[] marked = new boolean[graphic.length];
-    queue.add(start);
-    marked[start] = true;
-    int path = 1;
-    while (!queue.isEmpty()) {
-        int size = queue.size();
-        path++;
-        while (size-- > 0) {
-            int cur = queue.poll();
-            for (int next : graphic[cur]) {
-                if (next == end) {
-                    return path;
+        
+    // Bi-Directional BFS 44 ms
+    int ladderLength(string beginWord, string endWord, vector<string>& wordList) {
+        if (wordList.empty()) return 0;
+        unordered_set<string> dict(wordList.begin(), wordList.end());
+        if (!dict.count(endWord)) return 0;
+        int len = wordList[0].length(), steps = 0;
+        unordered_set<string> set1{beginWord};
+        unordered_set<string> set2{endWord};
+        while (!set1.empty() && !set2.empty()) {
+            steps++;
+            if (set1.size() > set2.size())
+                swap(set1, set2);
+            unordered_set<string> set;
+            for (string s : set1) {
+                for (int i = 0; i < len; ++i) {
+                    char tmp = s[i];
+                    for (char c = 'a'; c <= 'z'; ++c) {
+                        s[i] = c;
+                        if (set2.count(s)) return steps + 1;
+                        if (dict.count(s)) {
+                            set.insert(s);
+                            dict.erase(s);
+                        }
+                    }
+                    s[i] = tmp;
                 }
-                if (marked[next]) {
-                    continue;
-                }
-                marked[next] = true;
-                queue.add(next);
             }
+            swap(set1, set);
         }
+        return 0;
     }
-    return 0;
-}
+};
 ```
 
 # DFS
