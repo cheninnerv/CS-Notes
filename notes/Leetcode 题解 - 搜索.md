@@ -279,36 +279,30 @@ public:
  [0,0,0,0,0,0,0,1,1,0,0,0,0]]
 ```
 
-```java
-private int m, n;
-private int[][] direction = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
-
-public int maxAreaOfIsland(int[][] grid) {
-    if (grid == null || grid.length == 0) {
-        return 0;
+```c++
+class Solution {
+public:
+    int maxAreaOfIsland(vector<vector<int>>& grid) {
+        int ans = 0;
+        vector<pair<int, int>> directions{{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+        for (int x = 0; x < grid.size(); ++x)
+            for (int y = 0; y < grid[0].size(); ++y) {
+                int cnt = 0;
+                maxAreaOfIsland(grid, x, y, directions, cnt, ans);
+            }
+        return ans;
     }
-    m = grid.length;
-    n = grid[0].length;
-    int maxArea = 0;
-    for (int i = 0; i < m; i++) {
-        for (int j = 0; j < n; j++) {
-            maxArea = Math.max(maxArea, dfs(grid, i, j));
-        }
+private:
+    void maxAreaOfIsland(vector<vector<int>>& grid, int x, int y, vector<pair<int, int>>& directions, int& cnt, int& ans) {
+        int r = grid.size(), c = grid[0].size();
+        if (x == -1 || x == r || y == -1 || y == c || grid[x][y] == 0) return;
+        cnt++;
+        ans = max(ans, cnt);
+        grid[x][y] = 0;
+        for (const auto& d : directions)
+            maxAreaOfIsland(grid, x + d.first, y + d.second, directions, cnt, ans);
     }
-    return maxArea;
-}
-
-private int dfs(int[][] grid, int r, int c) {
-    if (r < 0 || r >= m || c < 0 || c >= n || grid[r][c] == 0) {
-        return 0;
-    }
-    grid[r][c] = 0;
-    int area = 1;
-    for (int[] d : direction) {
-        area += dfs(grid, r + d[0], c + d[1]);
-    }
-    return area;
-}
+};
 ```
 
 ## 2. 矩阵中的连通分量数目
@@ -329,37 +323,30 @@ Output: 3
 
 可以将矩阵表示看成一张有向图。
 
-```java
-private int m, n;
-private int[][] direction = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
-
-public int numIslands(char[][] grid) {
-    if (grid == null || grid.length == 0) {
-        return 0;
-    }
-    m = grid.length;
-    n = grid[0].length;
-    int islandsNum = 0;
-    for (int i = 0; i < m; i++) {
-        for (int j = 0; j < n; j++) {
-            if (grid[i][j] != '0') {
-                dfs(grid, i, j);
-                islandsNum++;
+```c++
+class Solution {
+public:
+    int numIslands(vector<vector<char>>& grid) {
+        int ans = 0;
+        vector<pair<int, int>> directions{{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+        for (int x = 0; x < grid.size(); ++x)
+            for (int y = 0; y < grid[0].size(); ++y) {
+                int cnt = 0;
+                maxAreaOfIsland(grid, x, y, directions, cnt);
+                if (cnt > 0) ans++;
             }
-        }
+        return ans;
     }
-    return islandsNum;
-}
-
-private void dfs(char[][] grid, int i, int j) {
-    if (i < 0 || i >= m || j < 0 || j >= n || grid[i][j] == '0') {
-        return;
+private:
+    void maxAreaOfIsland(vector<vector<char>>& grid, int x, int y, vector<pair<int, int>>& directions, int& cnt) {
+        int r = grid.size(), c = grid[0].size();
+        if (x == -1 || x == r || y == -1 || y == c || grid[x][y] == '0') return;
+        cnt++;
+        grid[x][y] = '0';
+        for (const auto& d : directions)
+            maxAreaOfIsland(grid, x + d.first, y + d.second, directions, cnt);
     }
-    grid[i][j] = '0';
-    for (int[] d : direction) {
-        dfs(grid, i + d[0], j + d[1]);
-    }
-}
+};
 ```
 
 ## 3. 好友关系的连通分量数目
@@ -382,30 +369,116 @@ The 2nd student himself is in a friend circle. So return 2.
 
 题目描述：好友关系可以看成是一个无向图，例如第 0 个人与第 1 个人是好友，那么 M[0][1] 和 M[1][0] 的值都为 1。
 
-```java
-private int n;
-
-public int findCircleNum(int[][] M) {
-    n = M.length;
-    int circleNum = 0;
-    boolean[] hasVisited = new boolean[n];
-    for (int i = 0; i < n; i++) {
-        if (!hasVisited[i]) {
-            dfs(M, i, hasVisited);
-            circleNum++;
+```c++
+class FindUnion {
+public:
+    FindUnion (int size) : parent_(size, 0), size_(size, 1), num_of_unions_(size) {
+        for (int i = 0; i < size; ++i) {
+            parent_[i] = i;
         }
     }
-    return circleNum;
-}
+    
+    bool Union(int a, int b) {
+        int root_a = Find(a);
+        int root_b = Find(b);
+        if (root_a == root_b) return false;
+        if (size_[root_a] > size_[root_b]) {
+            parent_[root_b] = root_a;
+            size_[root_a] += size_[root_b];
+        } else {
+            parent_[root_a] = root_b;
+            size_[root_b] += size_[root_a];
+        }
+        num_of_unions_--;
+        return true;
+    }
+    
+    int GetNumOfUnions() {
+        return num_of_unions_;
+    }
+      
+private:
+    int Find(int node) {
+        if (node != parent_[node]) {
+            parent_[node] = Find(parent_[node]);
+        }
+        return parent_[node];
+    }
+    
+    vector<int> parent_;
+    vector<int> size_;   
+    int num_of_unions_;
+};
 
-private void dfs(int[][] M, int i, boolean[] hasVisited) {
-    hasVisited[i] = true;
-    for (int k = 0; k < n; k++) {
-        if (M[i][k] == 1 && !hasVisited[k]) {
-            dfs(M, k, hasVisited);
+class Solution {
+public:
+    int findCircleNum(vector<vector<int>>& M) {
+        // return Method1(M); //DFS
+        return Method3(M); //Union Find
+    }
+
+private:
+    // DFS
+    int Method1(const vector<vector<int>>& M) {
+        int ans = 0;
+        vector<bool> visited(M.size(), false);
+        for (int i = 0; i < M.size(); ++i) {
+            if (visited[i]) continue;
+            DFS(M, i, visited);
+            ans++;
+        }
+        return ans;
+    }
+    
+    void DFS(const vector<vector<int>>& M, int curr, vector<bool>& visited) {
+        for (int i = 0; i < M.size(); ++i) {
+            if (visited[i]) continue;
+            if (M[curr][i]) {
+                visited[i] = true;
+                DFS(M, i, visited);
+            }
         }
     }
-}
+    
+    // union find
+    int Method2(vector<vector<int>>& M) {
+        FindUnion fu(M.size());
+        for (int i = 0; i < M.size(); ++i) {
+            for (int j = 0; j < M[0].size(); ++j) {
+                if (M[i][j]) fu.Union(i, j);
+            }
+        }
+        return fu.GetNumOfUnions();
+    }
+    
+    // union find - 2nd time by myself
+    int Method3(vector<vector<int>>& M) {
+        vector<int> root(M.size());
+        for (int i = 0; i < M.size(); ++i)
+            root[i] = i;
+        
+        for (int i = 0; i < M.size(); ++i) {
+            for (int j = 0; j < M[0].size(); ++j) {
+                if (M[i][j]) {
+                    int root_i = GetRoot(i, root);
+                    int root_j = GetRoot(j, root);
+                    root[root_i] = root_j;
+                }
+            }
+        }
+        unordered_set<int> circles;
+        for (int i = 0; i < M.size(); ++i)
+            circles.insert(GetRoot(i, root));
+        return circles.size();
+    }
+    
+    int GetRoot(int stu, vector<int>& root) {
+        if (root[stu] != stu) {
+            root[stu] = GetRoot(root[stu], root);
+        }
+        return root[stu];
+    }
+};
 ```
 
 ## 4. 填充封闭区域
@@ -430,49 +503,37 @@ X O X X
 
 题目描述：使被 'X' 包围的 'O' 转换为 'X'。
 
-先填充最外侧，剩下的就是里侧了。
-
-```java
-private int[][] direction = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
-private int m, n;
-
-public void solve(char[][] board) {
-    if (board == null || board.length == 0) {
-        return;
-    }
-
-    m = board.length;
-    n = board[0].length;
-
-    for (int i = 0; i < m; i++) {
-        dfs(board, i, 0);
-        dfs(board, i, n - 1);
-    }
-    for (int i = 0; i < n; i++) {
-        dfs(board, 0, i);
-        dfs(board, m - 1, i);
-    }
-
-    for (int i = 0; i < m; i++) {
-        for (int j = 0; j < n; j++) {
-            if (board[i][j] == 'T') {
-                board[i][j] = 'O';
-            } else if (board[i][j] == 'O') {
-                board[i][j] = 'X';
-            }
+```c++
+class Solution {
+public:
+    void solve(vector<vector<char>>& board) {
+        if (board.size() < 3 || board[0].size() < 3)
+            return;
+        vector<pair<int, int>> directions{{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+        int r = board.size(), c = board[0].size();
+        for (int i = 0; i < r; ++i) {
+            DFS(board, i, 0, directions);
+            DFS(board, i, c - 1, directions);
+        }
+        for (int j = 0; j < c; ++j) {
+            DFS(board, 0, j, directions);
+            DFS(board, r - 1, j, directions);
+        }
+        for (int i = 0; i < r; ++i)
+            for (int j = 0; j < c; ++j) {
+                if (board[i][j] == 'O') board[i][j] = 'X';
+                if (board[i][j] == 'T') board[i][j] = 'O';
         }
     }
-}
-
-private void dfs(char[][] board, int r, int c) {
-    if (r < 0 || r >= m || c < 0 || c >= n || board[r][c] != 'O') {
-        return;
+private:
+    void DFS(vector<vector<char>>& board, int i, int j, vector<pair<int, int>>& directions) {
+        if (i == -1 || i == board.size() || j == -1 || j == board[0].size() || 
+            board[i][j] == 'X' || board[i][j] == 'T') return;
+        board[i][j] = 'T';
+        for (const auto& p : directions)
+            DFS(board, i + p.first, j + p.second, directions);
     }
-    board[r][c] = 'T';
-    for (int[] d : direction) {
-        dfs(board, r + d[0], c + d[1]);
-    }
-}
+};
 ```
 
 ## 5. 能到达的太平洋和大西洋的区域
@@ -498,59 +559,43 @@ Return:
 
 左边和上边是太平洋，右边和下边是大西洋，内部的数字代表海拔，海拔高的地方的水能够流到低的地方，求解水能够流到太平洋和大西洋的所有位置。
 
-```java
-private int m, n;
-private int[][] matrix;
-private int[][] direction = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+```c++
+class Solution {
+public:
+    vector<vector<int>> pacificAtlantic(vector<vector<int>>& matrix) {
+        if (matrix.empty()) return {};
+        const int r = matrix.size(), c = matrix[0].size();
 
-public List<List<Integer>> pacificAtlantic(int[][] matrix) {
-    List<List<Integer>> ret = new ArrayList<>();
-    if (matrix == null || matrix.length == 0) {
-        return ret;
-    }
-
-    m = matrix.length;
-    n = matrix[0].length;
-    this.matrix = matrix;
-    boolean[][] canReachP = new boolean[m][n];
-    boolean[][] canReachA = new boolean[m][n];
-
-    for (int i = 0; i < m; i++) {
-        dfs(i, 0, canReachP);
-        dfs(i, n - 1, canReachA);
-    }
-    for (int i = 0; i < n; i++) {
-        dfs(0, i, canReachP);
-        dfs(m - 1, i, canReachA);
-    }
-
-    for (int i = 0; i < m; i++) {
-        for (int j = 0; j < n; j++) {
-            if (canReachP[i][j] && canReachA[i][j]) {
-                ret.add(Arrays.asList(i, j));
-            }
+        vector<vector<int>> p(r, vector<int>(c));
+        vector<vector<int>> a(r, vector<int>(c));
+        vector<pair<int, int>> directions{{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+        for (int x = 0; x < r; ++x) {
+            DFS(matrix, x, 0, 0, p, directions);  // left
+            DFS(matrix, x, c - 1, 0, a, directions); // right
         }
+    
+        for (int y = 0; y < c; ++y) {
+            DFS(matrix, 0, y, 0, p, directions);  // top
+            DFS(matrix, r - 1, y, 0, a, directions); // bottom
+        }  
+        
+        vector<vector<int>> ans;
+        for (int i = 0; i < r; ++i)
+            for (int j = 0; j < c; ++j)
+                if (p[i][j] && a[i][j]) ans.push_back({i, j});
+        return ans;
     }
-
-    return ret;
-}
-
-private void dfs(int r, int c, boolean[][] canReach) {
-    if (canReach[r][c]) {
-        return;
+private:
+    void DFS(vector<vector<int>>& h, int x, int y, int pre_h, vector<vector<int>>& ocean, vector<pair<int, int>>& directions) {
+        if (x == -1 || y == -1) return;
+        if (x == h.size() || y == h[0].size()) return;
+        if (h[x][y] < pre_h) return;
+        if (ocean[x][y] == 1) return;
+        ocean[x][y] = 1;       
+        for (const auto& p : directions)
+            DFS(h, x + p.first, y + p.second, h[x][y], ocean, directions);
     }
-    canReach[r][c] = true;
-    for (int[] d : direction) {
-        int nextR = d[0] + r;
-        int nextC = d[1] + c;
-        if (nextR < 0 || nextR >= m || nextC < 0 || nextC >= n
-                || matrix[r][c] > matrix[nextR][nextC]) {
-
-            continue;
-        }
-        dfs(nextR, nextC, canReach);
-    }
-}
+};
 ```
 
 # Backtracking
