@@ -623,31 +623,27 @@ Input:Digit string "23"
 Output: ["ad", "ae", "af", "bd", "be", "bf", "cd", "ce", "cf"].
 ```
 
-```java
-private static final String[] KEYS = {"", "", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz"};
-
-public List<String> letterCombinations(String digits) {
-    List<String> combinations = new ArrayList<>();
-    if (digits == null || digits.length() == 0) {
-        return combinations;
+```c++
+class Solution {
+public:
+    vector<string> letterCombinations(string digits) {
+        if (digits.empty()) return {};
+        vector<string> dict{"", "", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz"};
+        vector<string> ans;
+        string cur;
+        DFS(digits, 0, dict, cur, ans);
+        return ans;
     }
-    doCombination(new StringBuilder(), combinations, digits);
-    return combinations;
-}
-
-private void doCombination(StringBuilder prefix, List<String> combinations, final String digits) {
-    if (prefix.length() == digits.length()) {
-        combinations.add(prefix.toString());
-        return;
+    
+    void DFS (string& digits, int len, vector<string>& dict, string cur, vector<string>& ans) {
+        if (len == digits.size()) {
+            ans.push_back(cur);
+            return;
+        }
+        for (const auto c : dict[digits.at(len) - '0']) 
+            DFS(digits, len + 1, dict, cur + c, ans);
     }
-    int curDigits = digits.charAt(prefix.length()) - '0';
-    String letters = KEYS[curDigits];
-    for (char c : letters.toCharArray()) {
-        prefix.append(c);                         // 添加
-        doCombination(prefix, combinations, digits);
-        prefix.deleteCharAt(prefix.length() - 1); // 删除
-    }
-}
+};
 ```
 
 ## 2. IP 地址划分
@@ -661,36 +657,43 @@ Given "25525511135",
 return ["255.255.11.135", "255.255.111.35"].
 ```
 
-```java
-public List<String> restoreIpAddresses(String s) {
-    List<String> addresses = new ArrayList<>();
-    StringBuilder tempAddress = new StringBuilder();
-    doRestore(0, tempAddress, addresses, s);
-    return addresses;
-}
-
-private void doRestore(int k, StringBuilder tempAddress, List<String> addresses, String s) {
-    if (k == 4 || s.length() == 0) {
-        if (k == 4 && s.length() == 0) {
-            addresses.add(tempAddress.toString());
-        }
-        return;
+```c++
+class Solution {
+public:
+    vector<string> restoreIpAddresses(string s) {
+        if (s.empty()) return {};
+        vector<string> ans;
+        vector<string> sections;
+        DFS(s, 0, sections, ans);
+        return ans;
     }
-    for (int i = 0; i < s.length() && i <= 2; i++) {
-        if (i != 0 && s.charAt(0) == '0') {
-            break;
+    
+    void DFS(string s, int l, vector<string>& sections, vector<string>& ans) {
+        if (sections.size() > 0 && !Valid(sections.back()))
+            return;        
+        if (sections.size() == 4 && l < s.size())
+            return;        
+        if (sections.size() == 4 && l == s.size()) {
+            ans.push_back(sections[0] + "." + sections[1] + "." + 
+                          sections[2] + "." + sections[3]);
+            return;
         }
-        String part = s.substring(0, i + 1);
-        if (Integer.valueOf(part) <= 255) {
-            if (tempAddress.length() != 0) {
-                part = "." + part;
-            }
-            tempAddress.append(part);
-            doRestore(k + 1, tempAddress, addresses, s.substring(i + 1));
-            tempAddress.delete(tempAddress.length() - part.length(), tempAddress.length());
+        for (int len = 1; len <= 3; ++len) {
+            if (l + len > s.size()) continue;
+            sections.push_back(s.substr(l, len));
+            DFS(s, l + len, sections, ans);
+            sections.pop_back();
         }
     }
-}
+    
+    bool Valid(string s) {
+        if (s.empty()) return false;
+        if (s.size() == 1) return true;
+        if (s.size() == 2) return s[0] != '0';
+        if (s.size() == 3) return s[0] != '0' && stoi(s) <= 255;
+        return false;
+    }
+};
 ```
 
 ## 3. 在矩阵中寻找字符串
@@ -712,56 +715,39 @@ word = "SEE", -> returns true,
 word = "ABCB", -> returns false.
 ```
 
-```java
-private final static int[][] direction = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
-private int m;
-private int n;
-
-public boolean exist(char[][] board, String word) {
-    if (word == null || word.length() == 0) {
-        return true;
-    }
-    if (board == null || board.length == 0 || board[0].length == 0) {
-        return false;
-    }
-
-    m = board.length;
-    n = board[0].length;
-    boolean[][] hasVisited = new boolean[m][n];
-
-    for (int r = 0; r < m; r++) {
-        for (int c = 0; c < n; c++) {
-            if (backtracking(0, r, c, hasVisited, board, word)) {
-                return true;
+```c++
+class Solution {
+public:
+    bool exist(vector<vector<char>>& board, string word) {
+        if (board.empty() || board[0].empty() || word.empty()) return false;
+        for (int i = 0; i < board.size(); ++i)
+            for (int j = 0; j < board[0].size(); ++j) {
+                if (board[i][j] == word[0] && DFS(board, word, i, j))
+                    return true;
             }
-        }
-    }
-
-    return false;
-}
-
-private boolean backtracking(int curLen, int r, int c, boolean[][] visited, final char[][] board, final String word) {
-    if (curLen == word.length()) {
-        return true;
-    }
-    if (r < 0 || r >= m || c < 0 || c >= n
-            || board[r][c] != word.charAt(curLen) || visited[r][c]) {
-
         return false;
     }
+    
+    bool DFS(vector<vector<char>>& board, string word, int x, int y) {
+        if (x < 0 || y < 0 || x == board.size() || y == board[0].size()) return false;
+        if (word.empty() || board[x][y] != word[0]) return false;
+        if (word.size() == 1 && board[x][y] == word[0]) return true;
+        bool ans = false;
+        vector<int> d{0, 1, 0, -1, 0};
+        char tmp = board[x][y];
+        board[x][y] = '0';
+        // Time Limit Exceeded: (why?)
+        // for (int i = 0; i < d.size() - 1; ++i)
+        //     ans |= DFS(board, word.substr(1), x + d[i], y + d[i + 1]);
 
-    visited[r][c] = true;
-
-    for (int[] d : direction) {
-        if (backtracking(curLen + 1, r + d[0], c + d[1], visited, board, word)) {
-            return true;
-        }
+        ans = DFS(board, word.substr(1), x + 1, y) ||
+              DFS(board, word.substr(1), x - 1, y) ||
+              DFS(board, word.substr(1), x, y + 1) ||
+              DFS(board, word.substr(1), x, y - 1);
+        board[x][y] = tmp;
+        return ans;
     }
-
-    visited[r][c] = false;
-
-    return false;
-}
+};
 ```
 
 ## 4. 输出二叉树中所有从根到叶子的路径
@@ -782,46 +768,26 @@ private boolean backtracking(int curLen, int r, int c, boolean[][] visited, fina
 ["1->2->5", "1->3"]
 ```
 
-```java
-
-public List<String> binaryTreePaths(TreeNode root) {
-    List<String> paths = new ArrayList<>();
-    if (root == null) {
-        return paths;
+```c++
+class Solution {
+public:
+    vector<string> binaryTreePaths(TreeNode* root) {
+        vector<string> ans;
+        DFS(root, "", ans);
+        return ans;
     }
-    List<Integer> values = new ArrayList<>();
-    backtracking(root, values, paths);
-    return paths;
-}
-
-private void backtracking(TreeNode node, List<Integer> values, List<String> paths) {
-    if (node == null) {
-        return;
+    
+    void DFS(TreeNode* root, string cur, vector<string>& ans) {
+        if (root == nullptr) return;
+        string s = cur.empty() ? to_string(root->val) : "->" + to_string(root->val);
+        if (root->left == nullptr && root->right == nullptr) {
+            ans.push_back(cur + s);
+            return;
+        } 
+        DFS(root->left, cur + s, ans);
+        DFS(root->right, cur + s, ans);
     }
-    values.add(node.val);
-    if (isLeaf(node)) {
-        paths.add(buildPath(values));
-    } else {
-        backtracking(node.left, values, paths);
-        backtracking(node.right, values, paths);
-    }
-    values.remove(values.size() - 1);
-}
-
-private boolean isLeaf(TreeNode node) {
-    return node.left == null && node.right == null;
-}
-
-private String buildPath(List<Integer> values) {
-    StringBuilder str = new StringBuilder();
-    for (int i = 0; i < values.size(); i++) {
-        str.append(values.get(i));
-        if (i != values.size() - 1) {
-            str.append("->");
-        }
-    }
-    return str.toString();
-}
+};
 ```
 
 ## 5. 排列
@@ -842,31 +808,32 @@ private String buildPath(List<Integer> values) {
 ]
 ```
 
-```java
-public List<List<Integer>> permute(int[] nums) {
-    List<List<Integer>> permutes = new ArrayList<>();
-    List<Integer> permuteList = new ArrayList<>();
-    boolean[] hasVisited = new boolean[nums.length];
-    backtracking(permuteList, permutes, hasVisited, nums);
-    return permutes;
-}
-
-private void backtracking(List<Integer> permuteList, List<List<Integer>> permutes, boolean[] visited, final int[] nums) {
-    if (permuteList.size() == nums.length) {
-        permutes.add(new ArrayList<>(permuteList)); // 重新构造一个 List
-        return;
+```c++
+class Solution {
+public:
+    vector<vector<int>> permute(vector<int>& nums) {
+        if (nums.empty()) return {{}};
+        vector<int> visited(nums.size(), 0);
+        vector<vector<int>> ans;
+        vector<int> cur;
+        DFS(nums, visited, cur, ans);
+        return ans;
     }
-    for (int i = 0; i < visited.length; i++) {
-        if (visited[i]) {
-            continue;
+    
+    void DFS(vector<int>& nums, vector<int>& visited, vector<int>& cur, vector<vector<int>>& ans) {
+        if (cur.size() == nums.size()) {
+            ans.push_back(cur); return;
         }
-        visited[i] = true;
-        permuteList.add(nums[i]);
-        backtracking(permuteList, permutes, visited, nums);
-        permuteList.remove(permuteList.size() - 1);
-        visited[i] = false;
+        for (int i = 0; i < nums.size(); ++i) {
+            if (visited[i]) continue;
+            visited[i] = 1;
+            cur.push_back(nums[i]);
+            DFS(nums, visited, cur, ans);
+            cur.pop_back();
+            visited[i] = 0;
+        }
     }
-}
+};
 ```
 
 ## 6. 含有相同元素求排列
@@ -884,36 +851,34 @@ private void backtracking(List<Integer> permuteList, List<List<Integer>> permute
 
 在实现上，和 Permutations 不同的是要先排序，然后在添加一个元素时，判断这个元素是否等于前一个元素，如果等于，并且前一个元素还未访问，那么就跳过这个元素。
 
-```java
-public List<List<Integer>> permuteUnique(int[] nums) {
-    List<List<Integer>> permutes = new ArrayList<>();
-    List<Integer> permuteList = new ArrayList<>();
-    Arrays.sort(nums);  // 排序
-    boolean[] hasVisited = new boolean[nums.length];
-    backtracking(permuteList, permutes, hasVisited, nums);
-    return permutes;
-}
-
-private void backtracking(List<Integer> permuteList, List<List<Integer>> permutes, boolean[] visited, final int[] nums) {
-    if (permuteList.size() == nums.length) {
-        permutes.add(new ArrayList<>(permuteList));
-        return;
+```c++
+class Solution {
+public:
+    vector<vector<int>> permuteUnique(vector<int>& nums) {
+        if (nums.empty()) return {{}};
+        vector<int> visited(nums.size(), 0);
+        vector<vector<int>> ans;
+        vector<int> cur;
+        sort(nums.begin(), nums.end());
+        DFS(nums, visited, cur, ans);
+        return ans;
     }
-
-    for (int i = 0; i < visited.length; i++) {
-        if (i != 0 && nums[i] == nums[i - 1] && !visited[i - 1]) {
-            continue;  // 防止重复
+    
+    void DFS(vector<int>& nums, vector<int>& visited, vector<int>& cur, vector<vector<int>>& ans) {
+        if (cur.size() == nums.size()) {
+            ans.push_back(cur); return;
         }
-        if (visited[i]){
-            continue;
+        for (int i = 0; i < nums.size(); ++i) {
+            if (visited[i]) continue;
+            if (i > 0 && nums[i] == nums[i - 1] && !visited[i - 1]) continue;
+            visited[i] = 1;
+            cur.push_back(nums[i]);
+            DFS(nums, visited, cur, ans);
+            cur.pop_back();
+            visited[i] = 0;
         }
-        visited[i] = true;
-        permuteList.add(nums[i]);
-        backtracking(permuteList, permutes, visited, nums);
-        permuteList.remove(permuteList.size() - 1);
-        visited[i] = false;
     }
-}
+};
 ```
 
 ## 7. 组合
