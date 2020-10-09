@@ -899,25 +899,28 @@ If n = 4 and k = 2, a solution is:
 ]
 ```
 
-```java
-public List<List<Integer>> combine(int n, int k) {
-    List<List<Integer>> combinations = new ArrayList<>();
-    List<Integer> combineList = new ArrayList<>();
-    backtracking(combineList, combinations, 1, k, n);
-    return combinations;
-}
-
-private void backtracking(List<Integer> combineList, List<List<Integer>> combinations, int start, int k, final int n) {
-    if (k == 0) {
-        combinations.add(new ArrayList<>(combineList));
-        return;
+```c++
+class Solution {
+public:
+    vector<vector<int>> combine(int n, int k) {
+        vector<vector<int>> ans;
+        vector<int> comb;
+        DFS(n, k, 1, comb, ans);
+        return ans;
     }
-    for (int i = start; i <= n - k + 1; i++) {  // 剪枝
-        combineList.add(i);
-        backtracking(combineList, combinations, i + 1, k - 1, n);
-        combineList.remove(combineList.size() - 1);
+    
+    void DFS(int n, int k, int s, vector<int>& comb, vector<vector<int>>& ans) {
+        if (comb.size() == k) {
+            ans.push_back(comb);
+            return;
+        }
+        for (int i = s; i <= n; ++i) {
+            comb.push_back(i);
+            DFS(n, k, i + 1, comb, ans);
+            comb.pop_back();
+        }
     }
-}
+};
 ```
 
 ## 8. 组合求和
@@ -932,28 +935,30 @@ A solution set is:
 [[7],[2, 2, 3]]
 ```
 
-```java
-public List<List<Integer>> combinationSum(int[] candidates, int target) {
-    List<List<Integer>> combinations = new ArrayList<>();
-    backtracking(new ArrayList<>(), combinations, 0, target, candidates);
-    return combinations;
-}
-
-private void backtracking(List<Integer> tempCombination, List<List<Integer>> combinations,
-                          int start, int target, final int[] candidates) {
-
-    if (target == 0) {
-        combinations.add(new ArrayList<>(tempCombination));
-        return;
+```c++
+class Solution {
+public:
+    vector<vector<int>> combinationSum(vector<int>& candidates, int target) {
+        vector<vector<int>> ans;
+        vector<int> cand;
+        DFS(candidates, 0, cand, 0, target, ans);
+        return ans;
     }
-    for (int i = start; i < candidates.length; i++) {
-        if (candidates[i] <= target) {
-            tempCombination.add(candidates[i]);
-            backtracking(tempCombination, combinations, i, target - candidates[i], candidates);
-            tempCombination.remove(tempCombination.size() - 1);
+    
+    void DFS(vector<int>& candidates, int start, vector<int>& cand, int sum, 
+             int target, vector<vector<int>>& ans) {
+        if (sum == target) {
+            ans.push_back(cand);
+            return;
+        }
+        if (sum > target) return;
+        for (int i = start; i < candidates.size(); ++i) {
+            cand.push_back(candidates[i]);
+            DFS(candidates, i, cand, sum + candidates[i], target, ans);
+            cand.pop_back();
         }
     }
-}
+};
 ```
 
 ## 9. 含有相同元素的组合求和
@@ -973,34 +978,35 @@ A solution set is:
 ]
 ```
 
-```java
-public List<List<Integer>> combinationSum2(int[] candidates, int target) {
-    List<List<Integer>> combinations = new ArrayList<>();
-    Arrays.sort(candidates);
-    backtracking(new ArrayList<>(), combinations, new boolean[candidates.length], 0, target, candidates);
-    return combinations;
-}
-
-private void backtracking(List<Integer> tempCombination, List<List<Integer>> combinations,
-                          boolean[] hasVisited, int start, int target, final int[] candidates) {
-
-    if (target == 0) {
-        combinations.add(new ArrayList<>(tempCombination));
-        return;
+```c++
+class Solution {
+public:
+    vector<vector<int>> combinationSum2(vector<int>& candidates, int target) {
+        vector<vector<int>> ans;
+        vector<int> cand;
+        vector<int> visited(candidates.size());
+        sort(candidates.begin(), candidates.end());
+        DFS(candidates, 0, cand, 0, target, visited, ans);
+        return ans;
     }
-    for (int i = start; i < candidates.length; i++) {
-        if (i != 0 && candidates[i] == candidates[i - 1] && !hasVisited[i - 1]) {
-            continue;
+    
+    void DFS(vector<int>& candidates, int start, vector<int>& cand, int sum, 
+             int target, vector<int>& visited, vector<vector<int>>& ans) {
+        if (sum == target) {
+            ans.push_back(cand);
+            return;
         }
-        if (candidates[i] <= target) {
-            tempCombination.add(candidates[i]);
-            hasVisited[i] = true;
-            backtracking(tempCombination, combinations, hasVisited, i + 1, target - candidates[i], candidates);
-            hasVisited[i] = false;
-            tempCombination.remove(tempCombination.size() - 1);
+        if (sum > target) return;
+        for (int i = start; i < candidates.size(); ++i) {
+            if (i > 0 && candidates[i] == candidates[i - 1] && !visited[i - 1]) continue;
+            visited[i] = 1;
+            cand.push_back(candidates[i]);
+            DFS(candidates, i + 1, cand, sum + candidates[i], target, visited, ans);
+            cand.pop_back();
+            visited[i] = 0;
         }
     }
-}
+};
 ```
 
 ## 10. 1-9 数字的组合求和
@@ -1019,30 +1025,30 @@ Output:
 
 从 1-9 数字中选出 k 个数不重复的数，使得它们的和为 n。
 
-```java
-public List<List<Integer>> combinationSum3(int k, int n) {
-    List<List<Integer>> combinations = new ArrayList<>();
-    List<Integer> path = new ArrayList<>();
-    backtracking(k, n, 1, path, combinations);
-    return combinations;
-}
-
-private void backtracking(int k, int n, int start,
-                          List<Integer> tempCombination, List<List<Integer>> combinations) {
-
-    if (k == 0 && n == 0) {
-        combinations.add(new ArrayList<>(tempCombination));
-        return;
+```c++
+class Solution {
+public:
+    vector<vector<int>> combinationSum3(int k, int n) {
+        vector<vector<int>> ans;
+        vector<int> cand;
+        DFS(k, 1, cand, 0, n, ans);
+        return ans;
     }
-    if (k == 0 || n == 0) {
-        return;
+    
+    void DFS(const int& k, int start, vector<int>& cand, int sum, 
+             int target, vector<vector<int>>& ans) {
+        if (cand.size() == k && sum == target) {
+            ans.push_back(cand);
+            return;
+        }
+        if (sum > target) return;
+        for (int i = start; i <= 9; ++i) {
+            cand.push_back(i);
+            DFS(k, i + 1, cand, sum + i, target, ans);
+            cand.pop_back();
+        }
     }
-    for (int i = start; i <= 9; i++) {
-        tempCombination.add(i);
-        backtracking(k - 1, n - i, i + 1, tempCombination, combinations);
-        tempCombination.remove(tempCombination.size() - 1);
-    }
-}
+};
 ```
 
 ## 11. 子集
