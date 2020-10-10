@@ -1059,29 +1059,30 @@ public:
 
 找出集合的所有子集，子集不能重复，[1, 2] 和 [2, 1] 这种子集算重复
 
-```java
-public List<List<Integer>> subsets(int[] nums) {
-    List<List<Integer>> subsets = new ArrayList<>();
-    List<Integer> tempSubset = new ArrayList<>();
-    for (int size = 0; size <= nums.length; size++) {
-        backtracking(0, tempSubset, subsets, size, nums); // 不同的子集大小
+```c++
+class Solution {
+public:
+    vector<vector<int>> subsets(vector<int>& nums) {
+        vector<vector<int>> ans;
+        vector<int> cand;
+        for (int k = 0; k <= nums.size(); ++k) {
+            DFS(nums, 0, cand, k, ans);
+        }
+        return ans;
     }
-    return subsets;
-}
-
-private void backtracking(int start, List<Integer> tempSubset, List<List<Integer>> subsets,
-                          final int size, final int[] nums) {
-
-    if (tempSubset.size() == size) {
-        subsets.add(new ArrayList<>(tempSubset));
-        return;
+    
+    void DFS(vector<int>& nums, int start, vector<int>& cand, int k, vector<vector<int>>& ans) {
+        if (cand.size() == k) {
+            ans.push_back(cand);
+            return;
+        }
+        for (int i = start; i < nums.size(); ++i) {
+            cand.push_back(nums[i]);
+            DFS(nums, i + 1, cand, k, ans);
+            cand.pop_back();
+        }
     }
-    for (int i = start; i < nums.length; i++) {
-        tempSubset.add(nums[i]);
-        backtracking(i + 1, tempSubset, subsets, size, nums);
-        tempSubset.remove(tempSubset.size() - 1);
-    }
-}
+};
 ```
 
 ## 12. 含有相同元素求子集
@@ -1104,36 +1105,35 @@ If nums = [1,2,2], a solution is:
 ]
 ```
 
-```java
-public List<List<Integer>> subsetsWithDup(int[] nums) {
-    Arrays.sort(nums);
-    List<List<Integer>> subsets = new ArrayList<>();
-    List<Integer> tempSubset = new ArrayList<>();
-    boolean[] hasVisited = new boolean[nums.length];
-    for (int size = 0; size <= nums.length; size++) {
-        backtracking(0, tempSubset, subsets, hasVisited, size, nums); // 不同的子集大小
-    }
-    return subsets;
-}
-
-private void backtracking(int start, List<Integer> tempSubset, List<List<Integer>> subsets, boolean[] hasVisited,
-                          final int size, final int[] nums) {
-
-    if (tempSubset.size() == size) {
-        subsets.add(new ArrayList<>(tempSubset));
-        return;
-    }
-    for (int i = start; i < nums.length; i++) {
-        if (i != 0 && nums[i] == nums[i - 1] && !hasVisited[i - 1]) {
-            continue;
+```c++
+class Solution {
+public:
+    vector<vector<int>> subsetsWithDup(vector<int>& nums) {
+        vector<vector<int>> ans;
+        vector<int> cand;
+        sort(nums.begin(), nums.end());
+        vector<int> visited(nums.size());
+        for (int k = 0; k <= nums.size(); ++k) {
+            DFS(nums, 0, cand, visited, k, ans);
         }
-        tempSubset.add(nums[i]);
-        hasVisited[i] = true;
-        backtracking(i + 1, tempSubset, subsets, hasVisited, size, nums);
-        hasVisited[i] = false;
-        tempSubset.remove(tempSubset.size() - 1);
+        return ans;
     }
-}
+    
+    void DFS(vector<int>& nums, int start, vector<int>& cand, vector<int>& visited, int k, vector<vector<int>>& ans) {
+        if (cand.size() == k) {
+            ans.push_back(cand);
+            return;
+        }
+        for (int i = start; i < nums.size(); ++i) {
+            if (i > 0 && nums[i] == nums[i - 1] && !visited[i - 1]) continue;
+            visited[i] = 1;
+            cand.push_back(nums[i]);
+            DFS(nums, i + 1, cand, visited, k, ans);
+            cand.pop_back();
+            visited[i] = 0;
+        }
+    }
+};
 ```
 
 ## 13. 分割字符串使得每个部分都是回文数
@@ -1152,36 +1152,38 @@ Return
 ]
 ```
 
-```java
-public List<List<String>> partition(String s) {
-    List<List<String>> partitions = new ArrayList<>();
-    List<String> tempPartition = new ArrayList<>();
-    doPartition(s, partitions, tempPartition);
-    return partitions;
-}
-
-private void doPartition(String s, List<List<String>> partitions, List<String> tempPartition) {
-    if (s.length() == 0) {
-        partitions.add(new ArrayList<>(tempPartition));
-        return;
+```c++
+class Solution {
+public:
+    vector<vector<string>> partition(string s) {
+        vector<vector<string>> ans;
+        vector<string> row;
+        PartitionHelper(s, 0, row, ans);
+        return ans;
     }
-    for (int i = 0; i < s.length(); i++) {
-        if (isPalindrome(s, 0, i)) {
-            tempPartition.add(s.substring(0, i + 1));
-            doPartition(s.substring(i + 1), partitions, tempPartition);
-            tempPartition.remove(tempPartition.size() - 1);
+private:
+    void PartitionHelper(string s, int start, vector<string>& row, vector<vector<string>>& ans) {
+        if(start == s.length()) {
+            ans.push_back(row);
+            return;
+        }
+        for (int i = start; i < s.length(); ++i) {
+            if (!IsPalindrome(s, start, i))
+                continue;
+            row.push_back(s.substr(start, i - start + 1));
+            PartitionHelper(s, i + 1, row, ans);
+            row.pop_back();
         }
     }
-}
-
-private boolean isPalindrome(String s, int begin, int end) {
-    while (begin < end) {
-        if (s.charAt(begin++) != s.charAt(end--)) {
-            return false;
+     
+    bool IsPalindrome(string s, int start, int end) {
+        while (start < end) {
+            if (s[start] != s[end]) return false;
+            ++start; --end;
         }
+        return true;
     }
-    return true;
-}
+};
 ```
 
 ## 14. 数独
@@ -1191,56 +1193,57 @@ private boolean isPalindrome(String s, int begin, int end) {
 [Leetcode](https://leetcode.com/problems/sudoku-solver/description/) / [力扣](https://leetcode-cn.com/problems/sudoku-solver/description/)
 
 <div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/0e8fdc96-83c1-4798-9abe-45fc91d70b9d.png"/> </div><br>
-
-```java
-private boolean[][] rowsUsed = new boolean[9][10];
-private boolean[][] colsUsed = new boolean[9][10];
-private boolean[][] cubesUsed = new boolean[9][10];
-private char[][] board;
-
-public void solveSudoku(char[][] board) {
-    this.board = board;
-    for (int i = 0; i < 9; i++)
-        for (int j = 0; j < 9; j++) {
-            if (board[i][j] == '.') {
-                continue;
+kc:https://zxi.mytechroad.com/blog/searching/leetcode-37-sudoku-solver/
+遍历一遍matrix，建3个分别查询行，列，格，valid与否的数组（2d)
+ vector<vector<int>> rows_ 代表第几行（0-8）有没有数字X。 cols_代表第几列（0-8）有没有数字X， boxes_代表第几个格子（0-8）有没有数字X。另一个比较巧妙的写法是不写循环，而是用next_x, next_y来遍历，因为是个9x9的棋盘所以这两个值都很容易算，终止条件就是x==9 （0-8）。 一个出错的点：help function用了void没有bool做返回值，中间没有if这个判断if (solveSudoku(board, next_i, next_j)) return true;程序会在返回过程中总会继续跑下面的语句比如board[i][j] = '.';等，导致所有填好的val又全部清回'.'。
+   
+```c++
+class Solution {
+public:
+    void solveSudoku(vector<vector<char>>& board) {
+        rows_ = vector<vector<int>>(9, vector<int>(10));
+        cols_ = vector<vector<int>>(9, vector<int>(10));
+        grids_ = vector<vector<int>>(9, vector<int>(10));
+        
+        for (int i = 0; i < board.size(); ++i)
+            for (int j = 0; j < board[0].size(); ++j) {                
+                if (board[i][j] != '.') {
+                    int val = board[i][j] - '0';
+                    rows_[i][val] = 1;
+                    cols_[j][val] = 1;
+                    grids_[(i / 3) * 3 + (j / 3)][val] = 1;
+                }
             }
-            int num = board[i][j] - '0';
-            rowsUsed[i][num] = true;
-            colsUsed[j][num] = true;
-            cubesUsed[cubeNum(i, j)][num] = true;
-        }
-        backtracking(0, 0);
-}
-
-private boolean backtracking(int row, int col) {
-    while (row < 9 && board[row][col] != '.') {
-        row = col == 8 ? row + 1 : row;
-        col = col == 8 ? 0 : col + 1;
+        
+        solveSudoku(board, 0, 0);
     }
-    if (row == 9) {
-        return true;
-    }
-    for (int num = 1; num <= 9; num++) {
-        if (rowsUsed[row][num] || colsUsed[col][num] || cubesUsed[cubeNum(row, col)][num]) {
-            continue;
+private:
+    bool solveSudoku(vector<vector<char>>& board, int i, int j) {
+        if (i == 9) return true;
+        int next_j = (j + 1) % 9;
+        int next_i = next_j == 0 ? i + 1: i;
+        if (board[i][j] != '.')
+            return solveSudoku(board, next_i, next_j);
+        for (int val = 1; val <= 9; ++val) {
+            if (!rows_[i][val] && !cols_[j][val] && !grids_[(i / 3) * 3 + (j / 3)][val]) {
+                rows_[i][val] = 1;
+                cols_[j][val] = 1;
+                grids_[(i / 3) * 3 + (j / 3)][val] = 1;
+                board[i][j] = val + '0';
+                if (solveSudoku(board, next_i, next_j)) return true;
+                board[i][j] = '.';
+                rows_[i][val] = 0;
+                cols_[j][val] = 0;
+                grids_[(i / 3) * 3 + (j / 3)][val] = 0;            
+            }
         }
-        rowsUsed[row][num] = colsUsed[col][num] = cubesUsed[cubeNum(row, col)][num] = true;
-        board[row][col] = (char) (num + '0');
-        if (backtracking(row, col)) {
-            return true;
-        }
-        board[row][col] = '.';
-        rowsUsed[row][num] = colsUsed[col][num] = cubesUsed[cubeNum(row, col)][num] = false;
+        return false;
     }
-    return false;
-}
-
-private int cubeNum(int i, int j) {
-    int r = i / 3;
-    int c = j / 3;
-    return r * 3 + c;
-}
+    
+    vector<vector<int>> rows_;
+    vector<vector<int>> cols_;
+    vector<vector<int>> grids_;
+};
 ```
 
 ## 15. N 皇后
@@ -1253,62 +1256,56 @@ private int cubeNum(int i, int j) {
 
 在 n\*n 的矩阵中摆放 n 个皇后，并且每个皇后不能在同一行，同一列，同一对角线上，求所有的 n 皇后的解。
 
-一行一行地摆放，在确定一行中的那个皇后应该摆在哪一列时，需要用三个标记数组来确定某一列是否合法，这三个标记数组分别为：列标记数组、45 度对角线标记数组和 135 度对角线标记数组。
+一行一行地摆放，在确定一行中的那个皇后应该摆在哪一列时，需要用三个标记数组来确定某一位置[i(row)，j(column)]是否合法，这三个标记数组分别为：列标记数组cols_[j]、45 度对角线标记数组diagonal1_[i + j]和 135 度对角线标记数组diagonal2_[j - i + n - 1], 行不需要了因为是一行行往下走，所以保证一行只有一个Queen。
+https://zxi.mytechroad.com/blog/searching/leetcode-51-n-queens/
 
-45 度对角线标记数组的长度为 2 \* n - 1，通过下图可以明确 (r, c) 的位置所在的数组下标为 r + c。
-
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/9c422923-1447-4a3b-a4e1-97e663738187.jpg" width="300px"> </div><br>
-
-
-135 度对角线标记数组的长度也是 2 \* n - 1，(r, c) 的位置所在的数组下标为 n - 1 - (r - c)。
-
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/7a85e285-e152-4116-b6dc-3fab27ba9437.jpg" width="300px"> </div><br>
-
-```java
-private List<List<String>> solutions;
-private char[][] nQueens;
-private boolean[] colUsed;
-private boolean[] diagonals45Used;
-private boolean[] diagonals135Used;
-private int n;
-
-public List<List<String>> solveNQueens(int n) {
-    solutions = new ArrayList<>();
-    nQueens = new char[n][n];
-    for (int i = 0; i < n; i++) {
-        Arrays.fill(nQueens[i], '.');
+```c++
+class Solution {
+public:
+    vector<vector<string>> solveNQueens(int n) {
+        if (n < 1) return {{}};
+        cols_ = vector<int>(n);
+        diagonal1_ = vector<int>(n * 2 - 1);
+        diagonal2_ = vector<int>(n * 2 - 1);
+        vector<vector<string>> ans;
+        vector<string> rows;
+        solveNQueens(n, 0, rows, ans);
+        return ans;
     }
-    colUsed = new boolean[n];
-    diagonals45Used = new boolean[2 * n - 1];
-    diagonals135Used = new boolean[2 * n - 1];
-    this.n = n;
-    backtracking(0);
-    return solutions;
-}
-
-private void backtracking(int row) {
-    if (row == n) {
-        List<String> list = new ArrayList<>();
-        for (char[] chars : nQueens) {
-            list.add(new String(chars));
+private:
+    void solveNQueens(int n, int i, vector<string>& rows, vector<vector<string>>& ans) {
+        if (i == n) {
+            ans.push_back(rows); return;
         }
-        solutions.add(list);
-        return;
-    }
-
-    for (int col = 0; col < n; col++) {
-        int diagonals45Idx = row + col;
-        int diagonals135Idx = n - 1 - (row - col);
-        if (colUsed[col] || diagonals45Used[diagonals45Idx] || diagonals135Used[diagonals135Idx]) {
-            continue;
+        for (int j = 0; j < n; ++j) {
+            if (!cols_[j] && !diagonal1_[i + j] && !diagonal2_[j - i + n - 1]) {
+                cols_[j] = 1;
+                diagonal1_[i + j] = 1;
+                diagonal2_[j - i + n - 1] = 1;
+                rows.push_back(CreateRow(n, j));
+                solveNQueens(n, i + 1, rows, ans);
+                rows.pop_back();
+                cols_[j] = 0;
+                diagonal1_[i + j] = 0;
+                diagonal2_[j - i + n - 1] = 0;
+            }
         }
-        nQueens[row][col] = 'Q';
-        colUsed[col] = diagonals45Used[diagonals45Idx] = diagonals135Used[diagonals135Idx] = true;
-        backtracking(row + 1);
-        colUsed[col] = diagonals45Used[diagonals45Idx] = diagonals135Used[diagonals135Idx] = false;
-        nQueens[row][col] = '.';
     }
-}
+    
+    string CreateRow(int n, int j) {
+        string s;
+        for (int i = 0; i < n; ++i) {
+            if (i == j) s.push_back('Q');
+            else s.push_back('.');
+        }
+        return s;
+    }
+    
+    vector<int> cols_;
+    vector<int> rows_;
+    vector<int> diagonal1_;
+    vector<int> diagonal2_;
+};
 ```
 
 
