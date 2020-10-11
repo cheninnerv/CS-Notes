@@ -47,6 +47,28 @@
 
 # 斐波那契数列
 
+509. Fibonacci Number
+```html
+The Fibonacci numbers, commonly denoted F(n) form a sequence, called the Fibonacci sequence, such that each number is the sum of the two preceding ones, starting from 0 and 1. That is,
+
+F(0) = 0,   F(1) = 1
+F(N) = F(N - 1) + F(N - 2), for N > 1.
+Given N, calculate F(N).
+```
+
+```c++
+class Solution {
+public:
+    int fib(int N) {
+        int d[3];
+        d[0] = 0; d[1] = 1;
+        for (int i = 2; i <= N; ++i)
+            d[i % 3] = d[(i-1) % 3] + d[(i-2) % 3];
+        return d[N % 3];
+    }
+};
+```
+
 ## 1. 爬楼梯
 
 70\. Climbing Stairs (Easy)
@@ -65,19 +87,18 @@
 
 考虑到 dp[i] 只与 dp[i - 1] 和 dp[i - 2] 有关，因此可以只用两个变量来存储 dp[i - 1] 和 dp[i - 2]，使得原来的 O(N) 空间复杂度优化为 O(1) 复杂度。
 
-```java
-public int climbStairs(int n) {
-    if (n <= 2) {
-        return n;
+```c++
+class Solution {
+public:
+    int climbStairs(int n) {
+        int steps[3];
+        steps[0] = 1;
+        steps[1] = 1;
+        for (int i = 2; i <= n; ++i)
+            steps[i % 3] = steps[(i - 1) % 3] + steps[(i - 2) % 3];
+        return steps[n % 3];
     }
-    int pre2 = 1, pre1 = 2;
-    for (int i = 2; i < n; i++) {
-        int cur = pre1 + pre2;
-        pre2 = pre1;
-        pre1 = cur;
-    }
-    return pre1;
-}
+};
 ```
 
 ## 2. 强盗抢劫
@@ -96,16 +117,20 @@ public int climbStairs(int n) {
 
 <div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/2de794ca-aa7b-48f3-a556-a0e2708cb976.jpg" width="350px"> </div><br>
 
-```java
-public int rob(int[] nums) {
-    int pre2 = 0, pre1 = 0;
-    for (int i = 0; i < nums.length; i++) {
-        int cur = Math.max(pre2 + nums[i], pre1);
-        pre2 = pre1;
-        pre1 = cur;
+```c++
+class Solution {
+public:
+    int rob(vector<int>& nums) {
+        // dp(n) = max (dp(n - 2) + nums[n], dp(n - 1));
+        int dp1 = 0, dp2 = 0;
+        for (int i = 0; i < nums.size(); ++i) {
+            int dp = max(dp2 + nums[i], dp1); 
+            dp2 = dp1;
+            dp1 = dp;
+        }
+        return dp1;
     }
-    return pre1;
-}
+};
 ```
 
 ## 3. 强盗在环形街区抢劫
@@ -114,30 +139,32 @@ public int rob(int[] nums) {
 
 [Leetcode](https://leetcode.com/problems/house-robber-ii/description/) / [力扣](https://leetcode-cn.com/problems/house-robber-ii/description/)
 
-```java
-public int rob(int[] nums) {
-    if (nums == null || nums.length == 0) {
-        return 0;
+```c++
+class Solution {
+public:
+    int rob(vector<int>& nums) {
+        if (nums.size() == 1) return nums[0];
+        int dp1 = 0, dp2 = 0, ans = 0;
+        // rob 1st, not rob last
+        for (int i = 0; i < nums.size() - 1; ++i) {
+            int dp = max(dp2 + nums[i], dp1);
+            dp2 = dp1;
+            dp1 = dp;
+        }
+        ans = dp1;    
+        // rob last, not rob 1st
+        dp1 = 0, dp2 = 0;
+        for (int i = 1; i < nums.size(); ++i) {
+            int dp = max(dp2 + nums[i], dp1);
+            dp2 = dp1;
+            dp1 = dp;
+        }
+        return max(ans, dp1);
     }
-    int n = nums.length;
-    if (n == 1) {
-        return nums[0];
-    }
-    return Math.max(rob(nums, 0, n - 2), rob(nums, 1, n - 1));
-}
-
-private int rob(int[] nums, int first, int last) {
-    int pre2 = 0, pre1 = 0;
-    for (int i = first; i <= last; i++) {
-        int cur = Math.max(pre1, pre2 + nums[i]);
-        pre2 = pre1;
-        pre1 = cur;
-    }
-    return pre1;
-}
+};
 ```
 
-## 4. 信件错排
+## 4. 信件错排 (1-2year 跳过这题）
 
 题目描述：有 N 个 信 和 信封，它们被打乱，求错误装信方式的数量。
 
@@ -151,6 +178,36 @@ private int rob(int[] nums, int first, int last) {
 <!--<div align="center"><img src="https://latex.codecogs.com/gif.latex?dp[i]=(i-1)*dp[i-2]+(i-1)*dp[i-1]" class="mathjax-pic"/></div> <br>-->
 
 <div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/da1f96b9-fd4d-44ca-8925-fb14c5733388.png" width="350px"> </div><br>
+
+634. Find the Derangement of An Array
+```html
+In combinatorial mathematics, a derangement is a permutation of the elements of a set, such that no element appears in its original position.
+
+There's originally an array consisting of n integers from 1 to n in ascending order, you need to find the number of derangement it can generate.
+
+Also, since the answer may be very large, you should return the output mod 109 + 7.
+
+Example 1:
+Input: 3
+Output: 2
+Explanation: The original array is [1,2,3]. The two derangements are [2,3,1] and [3,1,2]
+```
+https://leetcode.com/problems/find-the-derangement-of-an-array/submissions/
+https://github.com/grandyang/leetcode/issues/634
+```c++
+class Solution {
+public:
+    int findDerangement(int n) {
+        if (n < 2) return 0;
+        vector<long long> dp(n + 1, 0);
+        dp[1] = 0; dp[2] = 1;
+        for (int i = 3; i <= n; ++i) {
+            dp[i] = (dp[i - 1] + dp[i - 2]) * (i - 1) % 1000000007;
+        }
+        return dp[n];
+    }
+};
+```
 
 ## 5. 母牛生产
 
