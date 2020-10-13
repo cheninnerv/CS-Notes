@@ -238,27 +238,23 @@ Given the above grid map, return 7. Because the path 1→3→1→1→1 minimizes
 
 题目描述：求从矩阵的左上角到右下角的最小路径和，每次只能向右和向下移动。
 
-```java
-public int minPathSum(int[][] grid) {
-    if (grid.length == 0 || grid[0].length == 0) {
-        return 0;
-    }
-    int m = grid.length, n = grid[0].length;
-    int[] dp = new int[n];
-    for (int i = 0; i < m; i++) {
-        for (int j = 0; j < n; j++) {
-            if (j == 0) {
-                dp[j] = dp[j];        // 只能从上侧走到该位置
-            } else if (i == 0) {
-                dp[j] = dp[j - 1];    // 只能从左侧走到该位置
-            } else {
-                dp[j] = Math.min(dp[j - 1], dp[j]);
+```c++
+class Solution {
+public:
+    int minPathSum(vector<vector<int>>& grid) {
+        if (grid.empty() || grid[0].empty()) return 0;
+        int m = grid.size(), n = grid[0].size();
+        vector<int> dp(n, INT_MAX); dp[0] = 0;
+        for (int i = 0; i < m; ++i)
+            for (int j = 0; j < n; ++j) {
+                if (j == 0)
+                    dp[j] += grid[i][j];
+                else
+                    dp[j] = min(dp[j - 1], dp[j]) + grid[i][j];
             }
-            dp[j] += grid[i][j];
-        }
+        return dp[n - 1];
     }
-    return dp[n - 1];
-}
+};
 ```
 
 ## 2. 矩阵的总路径数
@@ -271,17 +267,22 @@ public int minPathSum(int[][] grid) {
 
 <div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/dc82f0f3-c1d4-4ac8-90ac-d5b32a9bd75a.jpg" width=""> </div><br>
 
-```java
-public int uniquePaths(int m, int n) {
-    int[] dp = new int[n];
-    Arrays.fill(dp, 1);
-    for (int i = 1; i < m; i++) {
-        for (int j = 1; j < n; j++) {
-            dp[j] = dp[j] + dp[j - 1];
-        }
+```c++
+class Solution {
+public:
+    int uniquePaths(int m, int n) {
+        if (m == 0 || n == 0) return 0;
+        vector<int> dp(n, 0); dp[0] = 1;
+        for (int i = 0; i < m; ++i)
+            for (int j = 0; j < n; ++j) {
+                if (j == 0)
+                    continue;
+                else
+                    dp[j] = dp[j] + dp[j - 1];
+            }
+        return dp[n - 1];
     }
-    return dp[n - 1];
-}
+};
 ```
 
 也可以直接用数学公式求解，这是一个组合问题。机器人总共移动的次数 S=m+n-2，向下移动的次数 D=m-1，那么问题可以看成从 S 中取出 D 个位置的组合数量，这个问题的解为 C(S, D)。
@@ -314,24 +315,28 @@ sumRange(2, 5) -> -1
 sumRange(0, 5) -> -3
 ```
 
-求区间 i \~ j 的和，可以转换为 sum[j + 1] - sum[i]，其中 sum[i] 为 0 \~ i - 1 的和。
+求区间 i \~ j 的和，可以转换为 sum[j] - sum[i - 1]，其中 sum[i] 为 0 \~ i 的和。
 
-```java
+```c++
 class NumArray {
-
-    private int[] sums;
-
-    public NumArray(int[] nums) {
-        sums = new int[nums.length + 1];
-        for (int i = 1; i <= nums.length; i++) {
-            sums[i] = sums[i - 1] + nums[i - 1];
-        }
+public:
+    NumArray(vector<int>& nums) {
+        if (nums.empty()) return;
+        sum_ = vector<int>(nums.size());
+        sum_[0] = nums[0];
+        for (int i = 1; i < nums.size(); ++i)
+            sum_[i] = sum_[i - 1] + nums[i];
     }
-
-    public int sumRange(int i, int j) {
-        return sums[j + 1] - sums[i];
+    
+    int sumRange(int i, int j) {
+        if (i == 0)
+            return sum_[j];
+        else
+            return sum_[j] - sum_[i - 1];
     }
-}
+private:
+    vector<int> sum_;
+};
 ```
 
 ## 2. 数组中等差递增子区间的个数
@@ -373,24 +378,35 @@ dp[4] = dp[3] + 1 = 3
 
 因为递增子区间不一定以最后一个元素为结尾，可以是任意一个元素结尾，因此需要返回 dp 数组累加的结果。
 
-```java
-public int numberOfArithmeticSlices(int[] A) {
-    if (A == null || A.length == 0) {
-        return 0;
-    }
-    int n = A.length;
-    int[] dp = new int[n];
-    for (int i = 2; i < n; i++) {
-        if (A[i] - A[i - 1] == A[i - 1] - A[i - 2]) {
-            dp[i] = dp[i - 1] + 1;
+```c++
+class Solution {
+public:
+    int numberOfArithmeticSlices(vector<int>& A) {
+        if (A.size() < 3) return 0;
+        int ans = 0, l = 0, n = A.size(), pre = A[1] - A[0];
+        for (int r = 2; r <= n; ++r) {
+            if (r == n || A[r] - A[r - 1] != pre) {
+                int cnt = r - 1 - l + 1;
+                if (cnt >= 3)
+                    ans += numberOfArithmetic(cnt);
+                l = r - 1;
+                if (r < n) pre = A[r] - A[r - 1];
+            }
         }
+        return ans;
     }
-    int total = 0;
-    for (int cnt : dp) {
-        total += cnt;
+    
+    int numberOfArithmetic(int n) {
+        // int ans = 0, s = 3;
+        // while (s <= n) {
+        //     ans += n - s + 1;
+        //     s++;
+        // }
+        // return ans;
+        
+        return ((n - 1) * (n - 2)) / 2;
     }
-    return total;
-}
+};
 ```
 
 # 分割整数
@@ -403,17 +419,19 @@ public int numberOfArithmeticSlices(int[] A) {
 
 题目描述：For example, given n = 2, return 1 (2 = 1 + 1); given n = 10, return 36 (10 = 3 + 3 + 4).
 
-```java
-public int integerBreak(int n) {
-    int[] dp = new int[n + 1];
-    dp[1] = 1;
-    for (int i = 2; i <= n; i++) {
-        for (int j = 1; j <= i - 1; j++) {
-            dp[i] = Math.max(dp[i], Math.max(j * dp[i - j], j * (i - j)));
+```c++
+class Solution {
+public:
+    int integerBreak(int n) {
+        vector<int> dp(n + 1, 1);
+        for (int i = 3; i <= n; ++i) {
+            for (int j = 1; j < i; ++j) {
+                dp[i] = max(dp[i], max(j * (i - j), j * dp[i - j]));
+            }
         }
+        return dp[n];
     }
-    return dp[n];
-}
+};
 ```
 
 ## 2. 按平方数来分割整数
@@ -424,34 +442,35 @@ public int integerBreak(int n) {
 
 题目描述：For example, given n = 12, return 3 because 12 = 4 + 4 + 4; given n = 13, return 2 because 13 = 4 + 9.
 
-```java
-public int numSquares(int n) {
-    List<Integer> squareList = generateSquareList(n);
-    int[] dp = new int[n + 1];
-    for (int i = 1; i <= n; i++) {
-        int min = Integer.MAX_VALUE;
-        for (int square : squareList) {
-            if (square > i) {
-                break;
+```c++
+class Solution {
+public:
+    int numSquares(int n) {
+        vector<int> dp(n + 1, INT_MAX);
+        for (int i = 0; i < n + 1; ++i) {
+            if (i < 4) {
+                dp[i] = i; continue;
             }
-            min = Math.min(min, dp[i - square] + 1);
+            for (int j = 1; j * j <= i; ++j) {
+                dp[i] = min(dp[i], dp[i - j * j] + 1);
+            }
         }
-        dp[i] = min;
-    }
-    return dp[n];
-}
-
-private List<Integer> generateSquareList(int n) {
-    List<Integer> squareList = new ArrayList<>();
-    int diff = 3;
-    int square = 1;
-    while (square <= n) {
-        squareList.add(square);
-        square += diff;
-        diff += 2;
-    }
-    return squareList;
-}
+        return dp[n];
+     }
+    
+    // math
+    // int numSquares(int n) {
+    //     while (n % 4 == 0) n /= 4;
+    //     if (n % 8 == 7) return 4;
+    //     for (int a = 0; a * a <= n; ++a) {
+    //         int b = sqrt(n - a * a);
+    //         if (a * a + b * b == n) {
+    //             return a > 0 && b > 0 ? 2 : 1;
+    //         }
+    //     }
+    //     return 3;
+    // }
+};
 ```
 
 ## 3. 分割整数构成字母字符串
@@ -462,30 +481,31 @@ private List<Integer> generateSquareList(int n) {
 
 题目描述：Given encoded message "12", it could be decoded as "AB" (1 2) or "L" (12).
 
-```java
-public int numDecodings(String s) {
-    if (s == null || s.length() == 0) {
-        return 0;
+```c++
+class Solution {
+public:
+    int numDecodings(string s) {
+        cache_ = vector<int>(s.size(), -1);
+        int ans = numDecodings(s, 0);
+        return ans;
     }
-    int n = s.length();
-    int[] dp = new int[n + 1];
-    dp[0] = 1;
-    dp[1] = s.charAt(0) == '0' ? 0 : 1;
-    for (int i = 2; i <= n; i++) {
-        int one = Integer.valueOf(s.substring(i - 1, i));
-        if (one != 0) {
-            dp[i] += dp[i - 1];
+private:
+    int numDecodings(string s, int idx) {
+        if (s.empty()) return 1; 
+        if (cache_[idx] != -1) return cache_[idx];
+        int ans = 0;
+        for (int i = 1; i <= 2; ++i) {
+            if (i > s.size()) break;
+            string cur = s.substr(0, i);
+            if (cur[0] == '0') return 0;
+            if (stoi(cur) >= 1 && stoi(cur) <= 26)
+                ans += numDecodings(s.substr(i), idx + i);
         }
-        if (s.charAt(i - 2) == '0') {
-            continue;
-        }
-        int two = Integer.valueOf(s.substring(i - 2, i));
-        if (two <= 26) {
-            dp[i] += dp[i - 2];
-        }
+        return cache_[idx] = ans;
     }
-    return dp[n];
-}
+    
+    vector<int> cache_;
+};
 ```
 
 # 最长递增子序列
