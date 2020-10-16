@@ -530,83 +530,45 @@ private:
 
 [Leetcode](https://leetcode.com/problems/longest-increasing-subsequence/description/) / [力扣](https://leetcode-cn.com/problems/longest-increasing-subsequence/description/)
 
-```java
-public int lengthOfLIS(int[] nums) {
-    int n = nums.length;
-    int[] dp = new int[n];
-    for (int i = 0; i < n; i++) {
-        int max = 1;
-        for (int j = 0; j < i; j++) {
-            if (nums[i] > nums[j]) {
-                max = Math.max(max, dp[j] + 1);
-            }
-        }
-        dp[i] = max;
+```c++
+class Solution {
+public:
+    // Method 1, O(n^2) recursion + memory
+    int lengthOfLIS(vector<int>& nums) {
+        if (nums.empty()) return 0;
+        int ans = 0;
+        vector<int> cache(nums.size());
+        for (int i = nums.size() - 1; i >= 0; --i)
+            ans = max(ans, DFS(nums, i, cache));
+        return ans;
     }
-    return Arrays.stream(dp).max().orElse(0);
-}
-```
-
-使用 Stream 求最大值会导致运行时间过长，可以改成以下形式：
-
-```java
-int ret = 0;
-for (int i = 0; i < n; i++) {
-    ret = Math.max(ret, dp[i]);
-}
-return ret;
-```
-
-以上解法的时间复杂度为 O(N<sup>2</sup>)，可以使用二分查找将时间复杂度降低为 O(NlogN)。
-
-定义一个 tails 数组，其中 tails[i] 存储长度为 i + 1 的最长递增子序列的最后一个元素。对于一个元素 x，
-
-- 如果它大于 tails 数组所有的值，那么把它添加到 tails 后面，表示最长递增子序列长度加 1；
-- 如果 tails[i-1] < x <= tails[i]，那么更新 tails[i] = x。
-
-例如对于数组 [4,3,6,5]，有：
-
-```html
-tails      len      num
-[]         0        4
-[4]        1        3
-[3]        1        6
-[3,6]      2        5
-[3,5]      2        null
-```
-
-可以看出 tails 数组保持有序，因此在查找 S<sub>i</sub> 位于 tails 数组的位置时就可以使用二分查找。
-
-```java
-public int lengthOfLIS(int[] nums) {
-    int n = nums.length;
-    int[] tails = new int[n];
-    int len = 0;
-    for (int num : nums) {
-        int index = binarySearch(tails, len, num);
-        tails[index] = num;
-        if (index == len) {
-            len++;
+    
+    int DFS(vector<int>& nums, int i, vector<int>& cache) {
+        if (i == 0) return 1;
+        if (cache[i] > 0) return cache[i];
+        int pre = 0;
+        for (int j = i - 1; j >= 0; --j) {
+            if (nums[j] < nums[i])
+                pre = max(pre, DFS(nums, j, cache));
         }
+        return cache[i] = pre + 1;
     }
-    return len;
-}
-
-private int binarySearch(int[] tails, int len, int key) {
-    int l = 0, h = len;
-    while (l < h) {
-        int mid = l + (h - l) / 2;
-        if (tails[mid] == key) {
-            return mid;
-        } else if (tails[mid] > key) {
-            h = mid;
-        } else {
-            l = mid + 1;
+    
+    // Method 2, O(nlogn) binary search (a card game: patience sort)
+    int lengthOfLIS(vector<int>& nums) {
+        if (nums.empty()) return 0;
+        vector<int> stacks;
+        for (int i = 0; i < nums.size(); ++i) {
+            // lower_bound returns first >= item's idx
+            auto it = lower_bound(stacks.begin(), stacks.end(), nums[i]);
+            if (it == stacks.end()) stacks.push_back(nums[i]);
+            else *it = nums[i];
         }
+        return stacks.size();
     }
-    return l;
-}
+};
 ```
+
 
 ## 2. 一组整数对能够构成的最长链
 
@@ -622,24 +584,21 @@ Explanation: The longest chain is [1,2] -> [3,4]
 
 题目描述：对于 (a, b) 和 (c, d) ，如果 b < c，则它们可以构成一条链。
 
-```java
-public int findLongestChain(int[][] pairs) {
-    if (pairs == null || pairs.length == 0) {
-        return 0;
-    }
-    Arrays.sort(pairs, (a, b) -> (a[0] - b[0]));
-    int n = pairs.length;
-    int[] dp = new int[n];
-    Arrays.fill(dp, 1);
-    for (int i = 1; i < n; i++) {
-        for (int j = 0; j < i; j++) {
+```c++
+class Solution {
+public:
+    int findLongestChain(vector<vector<int>>& pairs) {
+        sort(pairs.begin(), pairs.end(), [&](vector<int>& a, vector<int>& b) {return a[1] < b[1];});
+        int ans = 1, j = 0;
+        for (int i = 1; i < pairs.size(); ++i) {
             if (pairs[j][1] < pairs[i][0]) {
-                dp[i] = Math.max(dp[i], dp[j] + 1);
+                ans++;
+                j = i;
             }
         }
+        return ans;
     }
-    return Arrays.stream(dp).max().orElse(0);
-}
+};
 ```
 
 ## 3. 最长摆动子序列
@@ -663,21 +622,29 @@ Output: 2
 
 要求：使用 O(N) 时间复杂度求解。
 
-```java
-public int wiggleMaxLength(int[] nums) {
-    if (nums == null || nums.length == 0) {
-        return 0;
-    }
-    int up = 1, down = 1;
-    for (int i = 1; i < nums.length; i++) {
-        if (nums[i] > nums[i - 1]) {
-            up = down + 1;
-        } else if (nums[i] < nums[i - 1]) {
-            down = up + 1;
+```c++
+class Solution {
+public:
+    int wiggleMaxLength(vector<int>& nums) {
+        if (nums.size() < 2) return nums.size();
+        // 1: look for positive, -1: look for negtive
+        int status = 0;
+        int ans = 1;
+        for (int i = 1; i < nums.size(); ++i) {
+            if (nums[i] == nums[i - 1]) continue;
+            if (status == 0) {
+                status = nums[i] > nums[i - 1] ? -1 : 1; 
+                ans++; continue;
+            }
+            if ((nums[i] > nums[i - 1] && status == 1) ||
+                (nums[i] < nums[i - 1] && status == -1)) {
+                ans ++;
+                status = -1 * status;
+            }    
         }
+        return ans;
     }
-    return Math.max(up, down);
-}
+};
 ```
 
 # 最长公共子序列
@@ -709,21 +676,93 @@ public int wiggleMaxLength(int[] nums) {
 
 [Leetcode](https://leetcode.com/problems/longest-common-subsequence/) / [力扣](https://leetcode-cn.com/problems/longest-common-subsequence/)
 
-```java
-    public int longestCommonSubsequence(String text1, String text2) {
-        int n1 = text1.length(), n2 = text2.length();
-        int[][] dp = new int[n1 + 1][n2 + 1];
-        for (int i = 1; i <= n1; i++) {
-            for (int j = 1; j <= n2; j++) {
-                if (text1.charAt(i - 1) == text2.charAt(j - 1)) {
-                    dp[i][j] = dp[i - 1][j - 1] + 1;
+```c++
+class Solution {
+public:
+    int longestCommonSubsequence(string text1, string text2) {
+        vector<int> dp(text2.length() + 1, 0);
+        int tmp = 0;
+        for (int i = 1; i <= text1.length(); ++i)
+            for (int j = 1; j <= text2.length(); ++j) {
+                if (j == 1) tmp = 0;
+                if (text1[i - 1] == text2[j - 1]) {
+                    int n = tmp + 1;
+                    tmp = dp[j];
+                    dp[j] = n;
                 } else {
-                    dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+                    tmp = dp[j];
+                    dp[j] = max(dp[j], dp[j - 1]);
                 }
             }
-        }
-        return dp[n1][n2];
+        return dp.back();        
     }
+    
+    // Method 2: Recursion
+    int longestCommonSubsequence(string& t1, string& t2, int i, int j) {
+        if (i < 0 || j < 0) return 0;
+        if (t1[i] == t2[j]) return 1 + longestCommonSubsequence(t1, t2, i - 1, j - 1);
+        return max(longestCommonSubsequence(t1, t2, i - 1, j),
+                   longestCommonSubsequence(t1, t2, i, j - 1));
+    }
+};
+```
+
+## 2. 编辑距离
+72\. Edit Distance
+https://leetcode.com/problems/edit-distance/
+```html
+Given two words word1 and word2, find the minimum number of operations required to convert word1 to word2.
+
+You have the following 3 operations permitted on a word:
+
+Insert a character
+Delete a character
+Replace a character
+
+Example 1:
+
+Input: word1 = "horse", word2 = "ros"
+Output: 3
+Explanation: 
+horse -> rorse (replace 'h' with 'r')
+rorse -> rose (remove 'r')
+rose -> ros (remove 'e')
+
+Example 2:
+
+Input: word1 = "intention", word2 = "execution"
+Output: 5
+Explanation: 
+intention -> inention (remove 't')
+inention -> enention (replace 'i' with 'e')
+enention -> exention (replace 'n' with 'x')
+exention -> exection (replace 'n' with 'c')
+exection -> execution (insert 'u')
+```
+
+```c++
+class Solution {
+public:
+    int minDistance(string word1, string word2) {
+        vector<int> dp(word2.length() + 1, 0);
+        int up_left = 0; // holder for dp[up_left]
+        for (int i = 0; i <= word1.length(); ++i)
+            for (int j = 0; j <= word2.length(); ++j) {
+                if (i == 0) {dp[j] = j; continue;}
+                if (j == 0) {dp[j] = i; up_left = i - 1; continue;}
+                if (word1[i - 1] == word2[j - 1]) {
+                    int n = up_left;
+                    up_left = dp[j];
+                    dp[j] = n;
+                } else {
+                    int n = 1 + min(up_left, min(dp[j], dp[j - 1]));
+                    up_left = dp[j];
+                    dp[j] = n;
+                }
+            }
+        return dp.back(); 
+    }
+};
 ```
 
 # 0-1 背包
