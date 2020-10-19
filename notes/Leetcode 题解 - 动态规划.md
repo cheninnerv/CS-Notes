@@ -707,63 +707,7 @@ public:
 };
 ```
 
-## 2. 编辑距离
-72\. Edit Distance
-https://leetcode.com/problems/edit-distance/
-```html
-Given two words word1 and word2, find the minimum number of operations required to convert word1 to word2.
 
-You have the following 3 operations permitted on a word:
-
-Insert a character
-Delete a character
-Replace a character
-
-Example 1:
-
-Input: word1 = "horse", word2 = "ros"
-Output: 3
-Explanation: 
-horse -> rorse (replace 'h' with 'r')
-rorse -> rose (remove 'r')
-rose -> ros (remove 'e')
-
-Example 2:
-
-Input: word1 = "intention", word2 = "execution"
-Output: 5
-Explanation: 
-intention -> inention (remove 't')
-inention -> enention (replace 'i' with 'e')
-enention -> exention (replace 'n' with 'x')
-exention -> exection (replace 'n' with 'c')
-exection -> execution (insert 'u')
-```
-
-```c++
-class Solution {
-public:
-    int minDistance(string word1, string word2) {
-        vector<int> dp(word2.length() + 1, 0);
-        int up_left = 0; // holder for dp[up_left]
-        for (int i = 0; i <= word1.length(); ++i)
-            for (int j = 0; j <= word2.length(); ++j) {
-                if (i == 0) {dp[j] = j; continue;}
-                if (j == 0) {dp[j] = i; up_left = i - 1; continue;}
-                if (word1[i - 1] == word2[j - 1]) {
-                    int n = up_left;
-                    up_left = dp[j];
-                    dp[j] = n;
-                } else {
-                    int n = 1 + min(up_left, min(dp[j], dp[j - 1]));
-                    up_left = dp[j];
-                    dp[j] = n;
-                }
-            }
-        return dp.back(); 
-    }
-};
-```
 
 # 0-1 背包
 
@@ -862,30 +806,50 @@ Explanation: The array can be partitioned as [1, 5, 5] and [11].
 
 可以看成一个背包大小为 sum/2 的 0-1 背包问题。
 
-```java
-public boolean canPartition(int[] nums) {
-    int sum = computeArraySum(nums);
-    if (sum % 2 != 0) {
+```c++
+// Recursion + Memory
+class Solution {
+public:
+    bool canPartition(vector<int>& nums) {
+        int sum = 0;
+        for (const auto& n : nums)
+            sum += n;
+        if (sum & 1 == 1) return false;
+        cache_ = vector(nums.size(), vector<int>((sum / 2) + 1, -1));
+        return DFS(nums, 0, sum >> 1);
+    }
+private:    
+    bool DFS(vector<int>& nums, int start, int sum) {
+        if (sum == 0) return true;
+        if (sum < 0 || start == nums.size()) return false;
+        if (cache_[start][sum] != -1) return cache_[start][sum];
+        for (int i = start; i < nums.size(); ++i) {
+            int val = nums[i];
+            if (DFS(nums, i + 1, sum - val)) return true;
+        }
+        cache_[start][sum] = 0;
         return false;
     }
-    int W = sum / 2;
-    boolean[] dp = new boolean[W + 1];
-    dp[0] = true;
-    for (int num : nums) {                 // 0-1 背包一个物品只能用一次
-        for (int i = W; i >= num; i--) {   // 从后往前，先计算 dp[i] 再计算 dp[i-num]
-            dp[i] = dp[i] || dp[i - num];
-        }
-    }
-    return dp[W];
-}
+    vector<vector<int>> cache_;
+};
 
-private int computeArraySum(int[] nums) {
-    int sum = 0;
-    for (int num : nums) {
-        sum += num;
+// DP
+class Solution {
+public:
+    bool canPartition(vector<int>& nums) {
+        const int sum = std::accumulate(nums.begin(), nums.end(), 0);
+        if (sum % 2 != 0) return false;
+        vector<int> dp(sum + 1, 0);
+        dp[0] = 1;
+        for (const int num : nums) {
+            for (int i = 0; i <= sum; ++i)
+                if (dp[i] && i + num < dp.size()) dp[i + num] = 1;
+            int test = sum / 2;
+            if (dp[test]) return true;
+        }
+        return false;
     }
-    return sum;
-}
+};
 ```
 
 ## 2. 改变一组数的正负号使得它们的和为一给定数
@@ -919,47 +883,24 @@ sum(P) + sum(N) + sum(P) - sum(N) = target + sum(P) + sum(N)
 ```
 
 因此只要找到一个子集，令它们都取正号，并且和等于 (target + sum(nums))/2，就证明存在解。
+kc: 很经典的题，仔细阅读https://zxi.mytechroad.com/blog/dynamic-programming/leetcode-494-target-sum/
+subset sum 解法：
 
-```java
-public int findTargetSumWays(int[] nums, int S) {
-    int sum = computeArraySum(nums);
-    if (sum < S || (sum + S) % 2 == 1) {
-        return 0;
+```c++
+class Solution {
+public:
+    int findTargetSumWays(vector<int>& nums, int S) {
+        const int sum = accumulate(nums.begin(), nums.end(), 0);
+        if (sum < S || (sum + S) % 2 != 0) return 0;
+        int target = (sum + S) / 2;
+        vector<int> dp(target + 1); dp[0] = 1;
+        for (const auto& item : nums) 
+            for (int j = target; j >= 0; --j) {
+                if (j - item >= 0) dp[j] += dp[j - item];
+            }      
+        return dp[target];
     }
-    int W = (sum + S) / 2;
-    int[] dp = new int[W + 1];
-    dp[0] = 1;
-    for (int num : nums) {
-        for (int i = W; i >= num; i--) {
-            dp[i] = dp[i] + dp[i - num];
-        }
-    }
-    return dp[W];
-}
-
-private int computeArraySum(int[] nums) {
-    int sum = 0;
-    for (int num : nums) {
-        sum += num;
-    }
-    return sum;
-}
-```
-
-DFS 解法：
-
-```java
-public int findTargetSumWays(int[] nums, int S) {
-    return findTargetSumWays(nums, 0, S);
-}
-
-private int findTargetSumWays(int[] nums, int start, int S) {
-    if (start == nums.length) {
-        return S == 0 ? 1 : 0;
-    }
-    return findTargetSumWays(nums, start + 1, S + nums[start])
-            + findTargetSumWays(nums, start + 1, S - nums[start]);
-}
+};
 ```
 
 ## 3. 01 字符构成最多的字符串
@@ -977,29 +918,21 @@ Explanation: There are totally 4 strings can be formed by the using of 5 0s and 
 
 这是一个多维费用的 0-1 背包问题，有两个背包大小，0 的数量和 1 的数量。
 
-```java
-public int findMaxForm(String[] strs, int m, int n) {
-    if (strs == null || strs.length == 0) {
-        return 0;
-    }
-    int[][] dp = new int[m + 1][n + 1];
-    for (String s : strs) {    // 每个字符串只能用一次
-        int ones = 0, zeros = 0;
-        for (char c : s.toCharArray()) {
-            if (c == '0') {
-                zeros++;
-            } else {
-                ones++;
-            }
+```c++
+class Solution {
+public:
+    int findMaxForm(vector<string>& strs, int m, int n) {
+        vector<vector<int>> dp(m + 1, vector<int>(n + 1, 0));
+        for (const auto& str : strs) {
+            int zeros = 0, ones = 0;
+            for (const auto& c : str) c == '0' ? zeros++ : ones++;
+            for (int i = m; i >= zeros; --i)
+                for (int j = n; j >= ones; --j) 
+                        dp[i][j] = max(dp[i][j], dp[i - zeros][j - ones] + 1);
         }
-        for (int i = m; i >= zeros; i--) {
-            for (int j = n; j >= ones; j--) {
-                dp[i][j] = Math.max(dp[i][j], dp[i - zeros][j - ones] + 1);
-            }
-        }
+        return dp[m][n];        
     }
-    return dp[m][n];
-}
+};
 ```
 
 ## 4. 找零钱的最少硬币数
@@ -1026,23 +959,34 @@ return -1.
 
 因为硬币可以重复使用，因此这是一个完全背包问题。完全背包只需要将 0-1 背包的逆序遍历 dp 数组改为正序遍历即可。
 
-```java
-public int coinChange(int[] coins, int amount) {
-    int[] dp = new int[amount + 1];
-    for (int coin : coins) {
-        for (int i = coin; i <= amount; i++) { //将逆序遍历改为正序遍历
-            if (i == coin) {
-                dp[i] = 1;
-            } else if (dp[i] == 0 && dp[i - coin] != 0) {
-                dp[i] = dp[i - coin] + 1;
-
-            } else if (dp[i - coin] != 0) {
-                dp[i] = Math.min(dp[i], dp[i - coin] + 1);
+```c++
+class Solution {
+public:
+    // Time complexity: O(n * amount^2)
+    int coinChange(vector<int>& coins, int amount) {
+        vector<int> dp(amount + 1, 1e5); dp[0] = 0;
+        for (const auto& coin : coins) {    
+            for (int i = amount - coin; i >= 0; --i) {
+                if (dp[i] != 1e5) {
+                    for (int k = 1; i + coin * k <= amount; ++k)
+                        dp[i + coin * k] = min(dp[i] + k, dp[i + coin * k]);
+                }             
             }
         }
+        return dp[amount] == 1e5 ? -1 : dp[amount];
     }
-    return dp[amount] == 0 ? -1 : dp[amount];
-}
+    
+    // Time complexity: O(n * amount)
+    int coinChange(vector<int>& coins, int amount) {
+        vector<int> dp(amount + 1, 1e5); dp[0] = 0;
+        for (const auto& coin : coins) {    
+            for (int i = coin; i <= amount; ++i) {
+                dp[i] = min(dp[i], dp[i - coin] + 1);      
+            }
+        }
+        return dp[amount] == 1e5 ? -1 : dp[amount];
+    }
+};
 ```
 
 ## 5. 找零钱的硬币数组合
@@ -1061,22 +1005,19 @@ Explanation: there are four ways to make up the amount:
 5=1+1+1+1+1
 ```
 
-完全背包问题，使用 dp 记录可达成目标的组合数目。
-
-```java
-public int change(int amount, int[] coins) {
-    if (coins == null) {
-        return 0;
-    }
-    int[] dp = new int[amount + 1];
-    dp[0] = 1;
-    for (int coin : coins) {
-        for (int i = coin; i <= amount; i++) {
-            dp[i] += dp[i - coin];
+```c++
+class Solution {
+public:
+    int change(int amount, vector<int>& coins) {
+        vector<int> dp(amount + 1); dp[0] = 1;
+        for (auto& coin : coins) {
+            for (int i = coin; i <= amount; ++i) {
+                dp[i] += dp[i - coin];
+            }
         }
+        return dp[amount];
     }
-    return dp[amount];
-}
+};
 ```
 
 ## 6. 字符串按单词列表分割
@@ -1101,21 +1042,37 @@ dict 中的单词没有使用次数的限制，因此这是一个完全背包问
 
 求解顺序的完全背包问题时，对物品的迭代应该放在最里层，对背包的迭代放在外层，只有这样才能让物品按一定顺序放入背包中。
 
-```java
-public boolean wordBreak(String s, List<String> wordDict) {
-    int n = s.length();
-    boolean[] dp = new boolean[n + 1];
-    dp[0] = true;
-    for (int i = 1; i <= n; i++) {
-        for (String word : wordDict) {   // 对物品的迭代应该放在最里层
-            int len = word.length();
-            if (len <= i && word.equals(s.substring(i - len, i))) {
-                dp[i] = dp[i] || dp[i - len];
+```c++
+    // Recursion + Memory
+    bool wordBreakRecursion(string s, unordered_set<string>& wordDict) {
+        if (s == "") return true;
+        // memory
+        if (mem_.count(s)) return mem_[s];
+        if (wordDict.count(s)) return mem_[s] = true;
+        
+        for (size_t i = 1; i < s.length(); ++i) {
+            if (wordBreakRecursion(s.substr(0, i), wordDict) && 
+                wordBreakRecursion(s.substr(i, s.length() - i), wordDict)) 
+                return mem_[s] = true; 
+        }
+        return mem_[s] = false;
+    }
+    
+    unordered_map<string, bool> mem_;
+    
+    // DP
+    bool wordBreakDP(string s, unordered_set<string>& wordDict) {
+        vector<bool> dp(s.size() + 1); dp[0] = true;
+        for (int i = 1; i <= s.size(); ++i) {
+            for (int j = 0; j < i; ++j) {
+                if (dp[j] && wordDict.count(s.substr(j, i - j))) {
+                    dp[i] = true; 
+                    break;
+                }
             }
         }
+        return dp.back();
     }
-    return dp[n];
-}
 ```
 
 ## 7. 组合总和
@@ -1356,30 +1313,29 @@ exection -> execution (insert 'u')
 
 题目描述：修改一个字符串成为另一个字符串，使得修改次数最少。一次修改操作包括：插入一个字符、删除一个字符、替换一个字符。
 
-```java
-public int minDistance(String word1, String word2) {
-    if (word1 == null || word2 == null) {
-        return 0;
-    }
-    int m = word1.length(), n = word2.length();
-    int[][] dp = new int[m + 1][n + 1];
-    for (int i = 1; i <= m; i++) {
-        dp[i][0] = i;
-    }
-    for (int i = 1; i <= n; i++) {
-        dp[0][i] = i;
-    }
-    for (int i = 1; i <= m; i++) {
-        for (int j = 1; j <= n; j++) {
-            if (word1.charAt(i - 1) == word2.charAt(j - 1)) {
-                dp[i][j] = dp[i - 1][j - 1];
-            } else {
-                dp[i][j] = Math.min(dp[i - 1][j - 1], Math.min(dp[i][j - 1], dp[i - 1][j])) + 1;
+```c++
+class Solution {
+public:
+    int minDistance(string word1, string word2) {
+        vector<int> dp(word2.length() + 1, 0);
+        int up_left = 0; // holder for dp[up_left]
+        for (int i = 0; i <= word1.length(); ++i)
+            for (int j = 0; j <= word2.length(); ++j) {
+                if (i == 0) {dp[j] = j; continue;}
+                if (j == 0) {dp[j] = i; up_left = i - 1; continue;}
+                if (word1[i - 1] == word2[j - 1]) {
+                    int n = up_left;
+                    up_left = dp[j];
+                    dp[j] = n;
+                } else {
+                    int n = 1 + min(up_left, min(dp[j], dp[j - 1]));
+                    up_left = dp[j];
+                    dp[j] = n;
+                }
             }
-        }
+        return dp.back(); 
     }
-    return dp[m][n];
-}
+};
 ```
 
 ## 3. 复制粘贴字符
