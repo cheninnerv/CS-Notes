@@ -30,10 +30,12 @@
     * [6. 字符串按单词列表分割](#6-字符串按单词列表分割)
     * [7. 组合总和](#7-组合总和)
 * [股票交易](#股票交易)
-    * [1. 需要冷却期的股票交易](#1-需要冷却期的股票交易)
-    * [2. 需要交易费用的股票交易](#2-需要交易费用的股票交易)
+    * [1. 只能进行一次的股票交易](#1-只能进行两次的股票交易)
+    * [2. 只能进行无数次的股票交易](#2-只能进行无数次的股票交易)
     * [3. 只能进行两次的股票交易](#3-只能进行两次的股票交易)
     * [4. 只能进行 k 次的股票交易](#4-只能进行-k-次的股票交易)
+    * [5. 需要冷却期的股票交易](#5-需要冷却期的股票交易)
+    * [6. 需要交易费用的股票交易](#6-需要交易费用的股票交易)
 * [字符串编辑](#字符串编辑)
     * [1. 删除两个字符串的字符使它们相等](#1-删除两个字符串的字符使它们相等)
     * [2. 编辑距离](#2-编辑距离)
@@ -1117,8 +1119,124 @@ public:
 ```
 
 # 股票交易
+## 1. 只能进行一次的股票交易
+```html
+121. Best Time to Buy and Sell Stock
+Say you have an array for which the ith element is the price of a given stock on day i.
 
-## 1. 需要冷却期的股票交易
+If you were only permitted to complete at most one transaction (i.e., buy one and sell one share of the stock), design an algorithm to find the maximum profit.
+
+Note that you cannot sell a stock before you buy one.
+
+Example 1:
+
+Input: [7,1,5,3,6,4]
+Output: 5
+Explanation: Buy on day 2 (price = 1) and sell on day 5 (price = 6), profit = 6-1 = 5.
+             Not 7-1 = 6, as selling price needs to be larger than buying price.
+```
+
+```c++
+    // template
+    int maxProfit(vector<int>& prices) {
+        int dp_i10 = 0, dp_i11 = INT_MIN;
+        for (const auto& p : prices) {
+            dp_i10 = max(dp_i10, dp_i11 + p);
+            dp_i11 = max(dp_i11, 0 - p);
+        }
+        return dp_i10;
+    }
+```
+
+## 2. 只能进行无数次的股票交易
+```html
+122. Best Time to Buy and Sell Stock II
+Say you have an array prices for which the ith element is the price of a given stock on day i.
+
+Design an algorithm to find the maximum profit. You may complete as many transactions as you like (i.e., buy one and sell one share of the stock multiple times).
+
+Note: You may not engage in multiple transactions at the same time (i.e., you must sell the stock before you buy again).
+
+Example 1:
+
+Input: [7,1,5,3,6,4]
+Output: 7
+Explanation: Buy on day 2 (price = 1) and sell on day 3 (price = 5), profit = 5-1 = 4.
+             Then buy on day 4 (price = 3) and sell on day 5 (price = 6), profit = 6-3 = 3.
+```
+```c++
+    int maxProfit(vector<int>& prices) {
+        int dp_ik0 = 0, dp_ik1 = INT_MIN;
+        for (const auto& p : prices) {
+            int pre_dp_ik0 = dp_ik0;
+            int pre_dp_ik1 = dp_ik1;
+            dp_ik0 = max(pre_dp_ik0, pre_dp_ik1 + p);
+            dp_ik1 = max(pre_dp_ik1, pre_dp_ik0 - p);
+        }
+        return dp_ik0;
+    }
+```
+
+
+## 3. 只能进行两次的股票交易
+
+123\. Best Time to Buy and Sell Stock III (Hard)
+
+[Leetcode](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-iii/description/) / [力扣](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock-iii/description/)
+
+```c++
+class Solution {
+public:
+    // template
+    int maxProfit(vector<int>& prices) {
+        int dp_i20 = 0, dp_i10 = 0, dp_i21 = INT_MIN, dp_i11 = INT_MIN;
+        for (const auto& p : prices) {
+            dp_i20 = max(dp_i20, dp_i21 + p);
+            dp_i21 = max(dp_i21, dp_i10 - p);
+            dp_i10 = max(dp_i10, dp_i11 + p);
+            dp_i11 = max(dp_i11, 0 - p);
+        }
+        return dp_i20;
+    }
+};
+```
+
+## 4. 只能进行 k 次的股票交易
+
+188\. Best Time to Buy and Sell Stock IV (Hard)
+
+[Leetcode](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-iv/description/) / [力扣](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock-iv/description/)
+
+```c++
+class Solution {
+public:
+    int maxProfit(int k, vector<int>& prices) {
+        // 这种情况下该问题退化为普通的股票可以交易无数次问题（股票题1）
+        if (k > prices.size() / 2) {
+            int dp_ik0 = 0, dp_ik1 = INT_MIN;
+            for (const auto& p : prices) {
+                int pre_dp_ik0 = dp_ik0;
+                int pre_dp_ik1 = dp_ik1;
+                dp_ik0 = max(pre_dp_ik0, pre_dp_ik1 + p);
+                dp_ik1 = max(pre_dp_ik1, pre_dp_ik0 - p);
+            }
+            return dp_ik0;
+        }
+        vector<int> dp_ik0(k + 1, 0);
+        vector<int> dp_ik1(k + 1, INT_MIN);
+        for (const auto& p : prices) {
+            for(int j = k; j > 0; --j) {
+                dp_ik0[j] = max(dp_ik0[j], dp_ik1[j] + p);
+                dp_ik1[j] = max(dp_ik1[j], dp_ik0[j - 1] - p);
+            } 
+        }
+        return dp_ik0[k];     
+    }
+};
+```
+
+
+## 5. 需要冷却期的股票交易
 
 309\. Best Time to Buy and Sell Stock with Cooldown(Medium)
 
@@ -1128,29 +1246,23 @@ public:
 
 <div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/ffd96b99-8009-487c-8e98-11c9d44ef14f.png" width="300px"> </div><br>
 
-```java
-public int maxProfit(int[] prices) {
-    if (prices == null || prices.length == 0) {
-        return 0;
+```c++
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        int dp_ik0 = 0, pre_dp_ik0 = 0, dp_ik1 = INT_MIN;
+        for (const auto& p : prices) {
+            int tmp = dp_ik0;
+            dp_ik0 = max(dp_ik0, dp_ik1 + p);
+            dp_ik1 = max(dp_ik1, pre_dp_ik0 - p);
+            pre_dp_ik0 = tmp;
+        }
+        return dp_ik0;
     }
-    int N = prices.length;
-    int[] buy = new int[N];
-    int[] s1 = new int[N];
-    int[] sell = new int[N];
-    int[] s2 = new int[N];
-    s1[0] = buy[0] = -prices[0];
-    sell[0] = s2[0] = 0;
-    for (int i = 1; i < N; i++) {
-        buy[i] = s2[i - 1] - prices[i];
-        s1[i] = Math.max(buy[i - 1], s1[i - 1]);
-        sell[i] = Math.max(buy[i - 1], s1[i - 1]) + prices[i];
-        s2[i] = Math.max(s2[i - 1], sell[i - 1]);
-    }
-    return Math.max(sell[N - 1], s2[N - 1]);
-}
+};
 ```
 
-## 2. 需要交易费用的股票交易
+## 6. 需要交易费用的股票交易
 
 714\. Best Time to Buy and Sell Stock with Transaction Fee (Medium)
 
@@ -1171,83 +1283,23 @@ The total profit is ((8 - 1) - 2) + ((9 - 4) - 2) = 8.
 
 <div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/1e2c588c-72b7-445e-aacb-d55dc8a88c29.png" width="300px"> </div><br>
 
-```java
-public int maxProfit(int[] prices, int fee) {
-    int N = prices.length;
-    int[] buy = new int[N];
-    int[] s1 = new int[N];
-    int[] sell = new int[N];
-    int[] s2 = new int[N];
-    s1[0] = buy[0] = -prices[0];
-    sell[0] = s2[0] = 0;
-    for (int i = 1; i < N; i++) {
-        buy[i] = Math.max(sell[i - 1], s2[i - 1]) - prices[i];
-        s1[i] = Math.max(buy[i - 1], s1[i - 1]);
-        sell[i] = Math.max(buy[i - 1], s1[i - 1]) - fee + prices[i];
-        s2[i] = Math.max(s2[i - 1], sell[i - 1]);
+```c++
+class Solution {
+public:
+    int maxProfit(vector<int>& prices, int fee) {
+        int dp_ik0 = 0, dp_ik1 = INT_MIN;
+        for (const auto& p : prices) {
+            int pre_dp_ik0 = dp_ik0;
+            int pre_dp_ik1 = dp_ik1;
+            dp_ik0 = max(pre_dp_ik0, pre_dp_ik1 + p);
+            dp_ik1 = max(pre_dp_ik1, pre_dp_ik0 - p - fee);
+        }
+        return dp_ik0;
     }
-    return Math.max(sell[N - 1], s2[N - 1]);
-}
+};
 ```
 
 
-## 3. 只能进行两次的股票交易
-
-123\. Best Time to Buy and Sell Stock III (Hard)
-
-[Leetcode](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-iii/description/) / [力扣](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock-iii/description/)
-
-```java
-public int maxProfit(int[] prices) {
-    int firstBuy = Integer.MIN_VALUE, firstSell = 0;
-    int secondBuy = Integer.MIN_VALUE, secondSell = 0;
-    for (int curPrice : prices) {
-        if (firstBuy < -curPrice) {
-            firstBuy = -curPrice;
-        }
-        if (firstSell < firstBuy + curPrice) {
-            firstSell = firstBuy + curPrice;
-        }
-        if (secondBuy < firstSell - curPrice) {
-            secondBuy = firstSell - curPrice;
-        }
-        if (secondSell < secondBuy + curPrice) {
-            secondSell = secondBuy + curPrice;
-        }
-    }
-    return secondSell;
-}
-```
-
-## 4. 只能进行 k 次的股票交易
-
-188\. Best Time to Buy and Sell Stock IV (Hard)
-
-[Leetcode](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-iv/description/) / [力扣](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock-iv/description/)
-
-```java
-public int maxProfit(int k, int[] prices) {
-    int n = prices.length;
-    if (k >= n / 2) {   // 这种情况下该问题退化为普通的股票交易问题
-        int maxProfit = 0;
-        for (int i = 1; i < n; i++) {
-            if (prices[i] > prices[i - 1]) {
-                maxProfit += prices[i] - prices[i - 1];
-            }
-        }
-        return maxProfit;
-    }
-    int[][] maxProfit = new int[k + 1][n];
-    for (int i = 1; i <= k; i++) {
-        int localMax = maxProfit[i - 1][0] - prices[0];
-        for (int j = 1; j < n; j++) {
-            maxProfit[i][j] = Math.max(maxProfit[i][j - 1], prices[j] + localMax);
-            localMax = Math.max(localMax, maxProfit[i - 1][j] - prices[j]);
-        }
-    }
-    return maxProfit[k][n - 1];
-}
-```
 
 # 字符串编辑
 
