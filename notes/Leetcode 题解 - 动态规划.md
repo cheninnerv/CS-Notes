@@ -1244,8 +1244,6 @@ public:
 
 题目描述：交易之后需要有一天的冷却时间。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/ffd96b99-8009-487c-8e98-11c9d44ef14f.png" width="300px"> </div><br>
-
 ```c++
 class Solution {
 public:
@@ -1280,8 +1278,6 @@ The total profit is ((8 - 1) - 2) + ((9 - 4) - 2) = 8.
 ```
 
 题目描述：每交易一次，都要支付一定的费用。
-
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/1e2c588c-72b7-445e-aacb-d55dc8a88c29.png" width="300px"> </div><br>
 
 ```c++
 class Solution {
