@@ -1313,21 +1313,31 @@ Explanation: You need one step to make "sea" to "ea" and another step to make "e
 
 可以转换为求两个字符串的最长公共子序列问题。
 
-```java
-public int minDistance(String word1, String word2) {
-    int m = word1.length(), n = word2.length();
-    int[][] dp = new int[m + 1][n + 1];
-    for (int i = 1; i <= m; i++) {
-        for (int j = 1; j <= n; j++) {
-            if (word1.charAt(i - 1) == word2.charAt(j - 1)) {
-                dp[i][j] = dp[i - 1][j - 1] + 1;
-            } else {
-                dp[i][j] = Math.max(dp[i][j - 1], dp[i - 1][j]);
+```c++
+class Solution {
+public:
+    int minDistance(string word1, string word2) {
+        vector<int> dp(word2.size() + 1);
+        for (int i = 0; i < dp.size(); ++i) 
+            dp[i] = i;
+        int up_left = 0;
+        for (int i = 1; i <= word1.size(); ++i) 
+            for (int j = 0; j <= word2.size(); ++j) {
+                if (j == 0) {
+                    up_left = i - 1; dp[j] = i; continue;
+                }
+                if (word1[i - 1] == word2[j - 1]) {
+                    int tmp = dp[j];
+                    dp[j] = up_left;
+                    up_left = tmp;
+                } else {
+                    up_left = dp[j];
+                    dp[j] = min(dp[j], dp[j - 1]) + 1;
+                }
             }
-        }
+        return dp.back();
     }
-    return m + n - 2 * dp[m][n];
-}
+};
 ```
 
 ## 2. 编辑距离
@@ -1401,32 +1411,20 @@ In step 1, we use Copy All operation.
 In step 2, we use Paste operation to get 'AA'.
 In step 3, we use Paste operation to get 'AAA'.
 ```
-
-```java
-public int minSteps(int n) {
-    if (n == 1) return 0;
-    for (int i = 2; i <= Math.sqrt(n); i++) {
-        if (n % i == 0) return i + minSteps(n / i);
-    }
-    return n;
-}
-```
-
-```java
-public int minSteps(int n) {
-    int[] dp = new int[n + 1];
-    int h = (int) Math.sqrt(n);
-    for (int i = 2; i <= n; i++) {
-        dp[i] = i;
-        for (int j = 2; j <= h; j++) {
-            if (i % j == 0) {
-                dp[i] = dp[j] + dp[i / j];
-                break;
-            }
+这题好像dp做并没有省时间。因为1-2年所以不细究了。
+```c++
+class Solution {
+public:
+    int minSteps(int n) {
+        if (n < 2) return 0;
+        int ans = n;
+        for (int i = n - 1; i > 1; --i) {
+            if (n % i == 0)
+                ans = min(ans, minSteps(i) + (n / i));
         }
+        return ans;
     }
-    return dp[n];
-}
+};
 ```
 
 
