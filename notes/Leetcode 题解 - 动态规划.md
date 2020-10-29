@@ -96,12 +96,14 @@ public:
 class Solution {
 public:
     int climbStairs(int n) {
-        int steps[3];
-        steps[0] = 1;
-        steps[1] = 1;
-        for (int i = 2; i <= n; ++i)
-            steps[i % 3] = steps[(i - 1) % 3] + steps[(i - 2) % 3];
-        return steps[n % 3];
+        if (n <= 2) return n;
+        int ans = 0, s1 = 1, s2 = 2;
+        for (int i = 3; i <= n; ++i) {
+            ans = s1 + s2;
+            s1 = s2;
+            s2 = ans;
+        }
+        return ans;
     }
 };
 ```
