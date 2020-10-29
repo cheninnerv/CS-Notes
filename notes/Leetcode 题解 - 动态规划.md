@@ -62,11 +62,14 @@ Given N, calculate F(N).
 class Solution {
 public:
     int fib(int N) {
-        int d[3];
-        d[0] = 0; d[1] = 1;
-        for (int i = 2; i <= N; ++i)
-            d[i % 3] = d[(i-1) % 3] + d[(i-2) % 3];
-        return d[N % 3];
+        if (N < 2) return N;
+        int ans = 0, d0 = 0, d1 = 1;
+        for (int i = 2; i <= N; ++i) {
+            ans = d0 + d1;
+            d0 = d1;
+            d1 = ans;
+        }
+        return ans;
     }
 };
 ```
