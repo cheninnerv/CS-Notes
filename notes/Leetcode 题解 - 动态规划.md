@@ -848,11 +848,11 @@ public:
         if (sum % 2 != 0) return false;
         vector<int> dp(sum + 1, 0);
         dp[0] = 1;
+        int target = sum / 2;
         for (const int num : nums) {
-            for (int i = 0; i <= sum; ++i)
-                if (dp[i] && i + num < dp.size()) dp[i + num] = 1;
-            int test = sum / 2;
-            if (dp[test]) return true;
+            for (int i = sum; i >= 0; --i)
+                if (dp[i] && i + num < dp.size()) dp[i + num] = 1; // the push way 
+            if (dp[target]) return true;
         }
         return false;
     }
